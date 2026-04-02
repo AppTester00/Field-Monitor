@@ -1458,7 +1458,12 @@ button:disabled {
         <p class="summary-label">This Week</p>
         <p id="weeklySummaryValue" class="summary-value">0</p>
       </div>
+
     </div>
+	<div id="reportsView">
+  <h2>Reports</h2>
+  <p>This is your reports page.</p>
+</div>
     <p id="summaryEmpty" class="inline-helper">No saved records available for summary yet.</p>
     <div id="summaryTableWrap"></div>
   </div>
@@ -1706,17 +1711,28 @@ function getInitials(name) {
 
 function showMainView(viewName) {
   pushDebugNav("showMainView(\"" + viewName + "\")");
+  
   const showActivity = viewName === "activity";
   const showSummary = viewName === "summary";
-  els.recordView.hidden = showActivity || showSummary;
+  const showReports = viewName === "reports";
+  
+  els.recordView.hidden = showActivity || showSummary; || showReports;
   els.activityView.hidden = !showActivity;
   els.summaryView.hidden = !showSummary;
-  els.recordView.style.display = showActivity || showSummary ? "none" : "block";
+  els.reportsView.hidden = !showReports;
+  
+  
+  els.recordView.style.display = showActivity || showSummary || showReports ? "none" : "block";
   els.activityView.style.display = showActivity ? "block" : "none";
   els.summaryView.style.display = showSummary ? "block" : "none";
-  els.recordTabButton.classList.toggle("active", !showActivity && !showSummary);
+  els.reportsView.style.display = showReports ? "block" : "none";
+  
+  els.recordTabButton.classList.toggle("active", !showActivity && !showSummary && !showReports);
   els.activityTabButton.classList.toggle("active", showActivity);
   els.summaryTabButton.classList.toggle("active", showSummary);
+  els.reportsTabButton.classList.toggle("active", showReports);
+  
+  
   els.recordTabButton.setAttribute("aria-current", !showActivity && !showSummary ? "page" : "false");
   els.activityTabButton.setAttribute("aria-current", showActivity ? "page" : "false");
   els.summaryTabButton.setAttribute("aria-current", showSummary ? "page" : "false");
