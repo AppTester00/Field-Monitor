@@ -1,0 +1,20 @@
+{
+  "name": "Field Monitor",
+  "short_name": "Monitor",
+  "id": "/",
+  "description": "Geotagged field monitor app with camera capture and Google Sheets sync.",
+  "start_url": "/index.html",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f4f6f8",
+  "theme_color": "#007bff",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

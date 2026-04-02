@@ -1,0 +1,3386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Field Monitor</title>
+<meta name="theme-color" content="#007bff">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Field Monitor">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon.svg">
+
+<style>
+body {
+  font-family: "Segoe UI", "Trebuchet MS", sans-serif;
+  background:
+    radial-gradient(circle at top left, rgba(215, 234, 223, 0.95), transparent 34%),
+    linear-gradient(180deg, #f3f8f2 0%, #e4efe7 100%);
+  padding: 18px;
+  color: #14212b;
+  overflow-x: hidden;
+}
+
+body.drawer-open {
+  overflow: hidden;
+}
+
+/* ===== FINAL SIDEBAR FIX ===== */
+
+.sidebar-overlay {
+  pointer-events: none;
+  z-index: 9998;
+}
+
+.sidebar-overlay.open {
+  pointer-events: auto;
+}
+
+.side-nav {
+  z-index: 9999;
+  pointer-events: auto;
+}
+
+.side-nav,
+.side-nav * {
+  pointer-events: auto !important;
+}
+
+/* 🔒 Hide debug message */
+#debugNavStatus {
+  display: none !important;
+}
+/* FIX SIDEBAR CLICK ISSUE */
+.side-nav,
+.side-nav * {
+  pointer-events: auto !important;
+}
+
+.sidebar-overlay {
+  pointer-events: none;
+}
+
+.sidebar-overlay.open {
+  pointer-events: auto;
+}
+.container {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 251, 249, 0.98) 100%);
+  padding: 22px 18px 26px;
+  border-radius: 22px;
+  max-width: 460px;
+  margin: auto;
+  border: 1px solid rgba(203, 216, 211, 0.95);
+  box-shadow: 0 18px 40px rgba(45, 74, 62, 0.14);
+  text-align: left;
+  backdrop-filter: blur(8px);
+}
+
+.app-header {
+  position: sticky;
+  top: max(0px, env(safe-area-inset-top));
+  z-index: 60;
+  margin: -2px -4px 12px;
+  padding: calc(env(safe-area-inset-top) + 2px) 4px 10px;
+  background: linear-gradient(180deg, rgba(248, 251, 249, 0.98) 0%, rgba(248, 251, 249, 0.92) 82%, rgba(248, 251, 249, 0) 100%);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  pointer-events: auto;
+  isolation: isolate;
+}
+
+.debug-nav-status {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: #f5faf7;
+  border: 1px dashed #bfd1c6;
+  color: #355446;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  line-height: 1.45;
+  word-break: break-word;
+}
+
+.debug-nav-status strong {
+  color: #163427;
+}
+
+h2 {
+  margin: 0;
+  text-align: center;
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: #183329;
+}
+
+.app-subtitle {
+  margin: 8px 0 0;
+  text-align: center;
+  font-size: 13px;
+  color: #5d7268;
+}
+
+.app-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin: 18px 0 12px;
+  flex-wrap: wrap;
+  position: relative;
+  z-index: 2;
+  pointer-events: auto;
+}
+
+.app-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: #edf5ff;
+  color: #1359b9;
+  font-size: 12px;
+  font-weight: 700;
+  border: 1px solid #d5e4fb;
+}
+
+.status-bar {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 32px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.status-pill.neutral {
+  background: #edf2f7;
+  color: #334e68;
+}
+
+.status-pill.success {
+  background: #e6f4ea;
+  color: #1f6f4a;
+}
+
+.status-pill.warning {
+  background: #fff4db;
+  color: #8a5a00;
+}
+
+.status-pill.error {
+  background: #fde8e8;
+  color: #b42318;
+}
+
+.field-group {
+  margin-top: 12px;
+}
+
+.section-card {
+  margin-top: 16px;
+  padding: 16px;
+  border: 1px solid #dbe5df;
+  border-radius: 18px;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fbf9 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85);
+}
+
+#appContent {
+  padding-bottom: 0;
+}
+
+.menu-button {
+  position: relative;
+  z-index: 3;
+  width: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  margin: 0;
+  padding: 0;
+  border-radius: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  line-height: 1;
+}
+
+.sidebar-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(11, 25, 20, 0.42);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.28s ease;
+  z-index: 69;
+}
+
+.sidebar-overlay.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.side-nav {
+  position: fixed;
+  top: 0;
+  left: var(--app-shell-left, 0px);
+  width: min(300px, calc(var(--app-shell-width, 100vw) - 44px));
+  height: 100vh;
+  padding: 18px 16px 22px;
+  background: linear-gradient(180deg, #fbfdfb 0%, #eff6f1 100%);
+  box-shadow: 0 20px 40px rgba(18, 37, 31, 0.22);
+  transform: translate3d(calc(-100% - 72px), 0, 0);
+  transition: transform 0.28s ease;
+  z-index: 70;
+  display: none;
+  flex-direction: column;
+  gap: 16px;
+  border-top-right-radius: 26px;
+  border-bottom-right-radius: 26px;
+  pointer-events: auto;
+  visibility: hidden;
+  touch-action: none;
+  will-change: transform;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  isolation: isolate;
+}
+
+.side-nav.open {
+  display: flex;
+  transform: translate3d(0, 0, 0);
+  pointer-events: auto;
+  visibility: visible;
+  touch-action: auto;
+}
+
+.side-nav-header {
+  padding: 6px 6px 0;
+}
+
+.side-nav-title {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #183329;
+}
+
+.side-nav-copy {
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: #5d7268;
+}
+
+.side-nav-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  position: relative;
+  z-index: 2;
+}
+
+.side-nav button {
+  min-height: 60px;
+  margin: 0;
+  padding: 12px 14px;
+  font-size: 14px;
+  box-shadow: none;
+  border-radius: 18px;
+  position: relative;
+  background: #ffffff;
+  color: #35534a;
+  border: 1px solid #d2ddd7;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 12px;
+  transition: transform 0.22s ease, background 0.22s ease, box-shadow 0.22s ease, color 0.22s ease;
+  pointer-events: auto;
+  touch-action: manipulation;
+  position: relative;
+  z-index: 1;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.side-nav button * {
+  pointer-events: auto;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.side-nav button.active {
+  background: linear-gradient(135deg, #157a64 0%, #0f6b58 100%);
+  color: #ffffff;
+  border-color: #0f6b58;
+  box-shadow: 0 12px 22px rgba(15, 107, 88, 0.24);
+  transform: translateX(4px);
+}
+
+.side-nav button.active::after {
+  content: "";
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  width: 4px;
+  height: 30px;
+  transform: translateY(-50%);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.settings-button {
+  position: relative;
+  z-index: 3;
+  width: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  margin: 0;
+  padding: 0;
+  border-radius: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  line-height: 1;
+}
+
+body.auth-mode #menuButton,
+body.auth-mode #settingsButton,
+body.auth-mode #sidebarOverlay,
+body.auth-mode #sideNav,
+body.auth-mode #settingsOverlay,
+body.auth-mode #settingsDrawer {
+  display: none !important;
+}
+
+.settings-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(8, 16, 22, 0.46);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.28s ease;
+  z-index: 79;
+}
+
+.settings-overlay.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.settings-drawer {
+  position: fixed;
+  top: 0;
+  right: var(--app-shell-right-gap, 0px);
+  width: min(320px, calc(var(--app-shell-width, 100vw) - 28px));
+  height: 100vh;
+  padding: 18px 16px 22px;
+  background: linear-gradient(180deg, #fbfdfd 0%, #eef4f5 100%);
+  box-shadow: -18px 0 36px rgba(16, 30, 38, 0.18);
+  transform: translate3d(calc(100% + 72px), 0, 0);
+  transition: transform 0.28s ease;
+  z-index: 80;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  border-top-left-radius: 26px;
+  border-bottom-left-radius: 26px;
+  pointer-events: none;
+  visibility: hidden;
+  touch-action: none;
+  will-change: transform;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  isolation: isolate;
+}
+
+.settings-drawer.open {
+  transform: translate3d(0, 0, 0);
+  pointer-events: auto;
+  visibility: visible;
+  touch-action: auto;
+}
+
+.settings-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.settings-close {
+  width: 40px;
+  min-width: 40px;
+  min-height: 40px;
+  margin: 0;
+  padding: 0;
+  border-radius: 12px;
+  box-shadow: none;
+}
+
+.profile-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px;
+  border-radius: 22px;
+  background: linear-gradient(135deg, #ffffff 0%, #f4f9fa 100%);
+  border: 1px solid #d9e4e7;
+  box-shadow: 0 12px 26px rgba(26, 54, 65, 0.08);
+}
+
+.profile-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #0d67d1 0%, #157a64 100%);
+  color: #ffffff;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  box-shadow: 0 12px 22px rgba(21, 122, 100, 0.2);
+}
+
+.profile-name {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #183329;
+}
+
+.profile-role {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: #5d7268;
+}
+
+.settings-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.settings-app-card {
+  padding: 14px;
+  border-radius: 18px;
+  border: 1px solid #d8e2e5;
+  background: linear-gradient(180deg, #ffffff 0%, #f6fafb 100%);
+}
+
+.settings-app-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.settings-app-label {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #5a6e65;
+}
+
+.settings-app-version {
+  margin: 8px 0 0;
+  font-size: 13px;
+  color: #52606d;
+}
+
+.drawer-install-button {
+  width: 100%;
+  margin-top: 12px;
+  justify-content: center;
+}
+
+.settings-item {
+  min-height: 56px;
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 18px;
+  border: 1px solid #d8e2e5;
+  background: #ffffff;
+  color: #334e68;
+  box-shadow: none;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  justify-content: flex-start;
+  transition: transform 0.22s ease, background 0.22s ease, color 0.22s ease, box-shadow 0.22s ease;
+}
+
+.settings-item.active {
+  background: linear-gradient(135deg, #edf7ff 0%, #e6f5f0 100%);
+  color: #0f6b58;
+  border-color: #b8d9ca;
+  box-shadow: 0 10px 18px rgba(15, 107, 88, 0.12);
+  transform: translateX(-2px);
+}
+
+.settings-item .nav-icon {
+  width: 18px;
+  height: 18px;
+}
+
+.drawer-spacer {
+  flex: 1;
+}
+
+.logout-drawer-button {
+  min-height: 54px;
+  margin: 0;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #d93f3f 0%, #b83232 100%);
+  box-shadow: 0 12px 22px rgba(185, 50, 50, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.nav-icon {
+  width: 20px;
+  height: 20px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.nav-label {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: 0.01em;
+}
+
+.view-panel[hidden] {
+  display: none !important;
+}
+
+.view-panel.panel-enter {
+  animation: panelEnter 0.22s ease;
+}
+
+@keyframes panelEnter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.report-table-wrap {
+  overflow-x: auto;
+}
+
+.report-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  color: #243b53;
+}
+
+.report-table th,
+.report-table td {
+  padding: 10px 8px;
+  border-top: 1px solid #e6eeea;
+  text-align: left;
+  vertical-align: top;
+}
+
+.report-table th {
+  border-top: none;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #5a6e65;
+  background: #f3f7f4;
+}
+
+.report-thumb {
+  width: 58px;
+  height: 58px;
+  object-fit: cover;
+  border-radius: 12px;
+  border: 1px solid #d7e2dc;
+  background: #f4f7fb;
+}
+
+.report-thumb-link {
+  display: inline-flex;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.summary-metric {
+  padding: 14px;
+  border: 1px solid #dbe5df;
+  border-radius: 16px;
+  background: linear-gradient(180deg, #ffffff 0%, #f5faf7 100%);
+}
+
+.summary-label {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #5a6e65;
+}
+
+.summary-value {
+  margin: 8px 0 0;
+  font-size: 30px;
+  font-weight: 800;
+  color: #183329;
+}
+
+.summary-table {
+  width: 100%;
+  margin-top: 14px;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.summary-table th,
+.summary-table td {
+  padding: 10px 8px;
+  border-top: 1px solid #e6eeea;
+  text-align: left;
+}
+
+.summary-table th {
+  border-top: none;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #5a6e65;
+}
+
+.section-title {
+  margin: 0 0 10px;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #557067;
+}
+
+label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #243b53;
+}
+
+button {
+  min-height: 48px;
+  padding: 11px 14px;
+  margin: 8px 0;
+  width: 100%;
+  border: none;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #0d67d1 0%, #0756b7 100%);
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  box-shadow: 0 10px 22px rgba(7, 86, 183, 0.2);
+}
+
+input,
+select {
+  width: 100%;
+  min-height: 54px;
+  padding: 12px 14px;
+  box-sizing: border-box;
+  border: 1px solid #c8d5cf;
+  border-radius: 14px;
+  font-size: 16px;
+  background: #fbfdfb;
+  color: #14212b;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+input:focus,
+select:focus {
+  outline: none;
+  border-color: #4a9a7c;
+  box-shadow: 0 0 0 4px rgba(74, 154, 124, 0.12);
+}
+
+.helper-text {
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: #52606d;
+}
+
+.inline-helper {
+  margin: 0 0 8px;
+  font-size: 13px;
+  color: #52606d;
+}
+
+#location,
+#coords,
+#accuracy,
+#address {
+  font-size: 14px;
+}
+
+#address {
+  margin: 10px 0;
+  color: #2f4858;
+}
+
+#coords {
+  margin: 12px 0;
+  color: #333;
+}
+
+#accuracy {
+  margin: 8px 0;
+  color: #8a5a00;
+}
+
+#map {
+  width: 100%;
+  height: 220px;
+  margin-top: 14px;
+  border: 1px solid #d7e2dc;
+  border-radius: 14px;
+}
+
+#camera {
+  display: none;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: #000;
+}
+
+#preview {
+  display: none;
+  width: 100%;
+  height: auto;
+  max-height: 420px;
+  object-fit: contain;
+  border-radius: 18px;
+  background: #f4f7fb;
+}
+
+.camera-shell {
+  margin-top: 14px;
+  border-radius: 24px;
+  overflow: hidden;
+  background: linear-gradient(180deg, #12161b 0%, #0d1014 100%);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 18px 32px rgba(13, 18, 24, 0.18);
+}
+
+.camera-shell[hidden] {
+  display: none !important;
+}
+
+.camera-stage {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 9 / 14;
+  min-height: 320px;
+  background: #040506;
+}
+
+.capture-flash {
+  position: absolute;
+  inset: 0;
+  background: #ffffff;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 7;
+}
+
+.capture-flash.active {
+  animation: captureFlash 240ms ease;
+}
+
+@keyframes captureFlash {
+  0% { opacity: 0; }
+  18% { opacity: 0.94; }
+  100% { opacity: 0; }
+}
+
+.camera-topbar {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  right: 12px;
+  z-index: 8;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  pointer-events: none;
+}
+
+.camera-status-pill {
+  pointer-events: auto;
+  max-width: 70%;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(12, 16, 20, 0.54);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #f1f6fb;
+  font-size: 12px;
+  font-weight: 700;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.camera-icon-button {
+  pointer-events: auto;
+  width: 48px;
+  min-width: 48px;
+  min-height: 48px;
+  margin: 0;
+  padding: 0;
+  border-radius: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(12, 16, 20, 0.56);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.24);
+}
+
+.camera-icon-button svg {
+  width: 22px;
+  height: 22px;
+}
+
+.camera-bottom-controls {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 18px;
+  z-index: 8;
+  display: flex;
+  justify-content: center;
+  padding: 0 18px;
+}
+
+#takePhotoButton {
+  display: none;
+}
+
+#cameraShell.camera-active #takePhotoButton {
+  display: inline-flex;
+}
+
+.shutter-button {
+  width: 86px;
+  min-width: 86px;
+  min-height: 86px;
+  padding: 0;
+  margin: 0;
+  border-radius: 50%;
+  background: transparent;
+  box-shadow: none;
+  position: relative;
+}
+
+.shutter-button::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 4px solid rgba(255, 255, 255, 0.86);
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.34);
+}
+
+.shutter-button::after {
+  content: "";
+  position: absolute;
+  inset: 13px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: inset 0 -4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.shutter-button:disabled::before,
+.shutter-button:disabled::after {
+  opacity: 0.55;
+}
+
+.camera-secondary-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 14px;
+  margin-bottom: 18px;
+}
+
+.camera-secondary-actions button,
+.camera-upload-button {
+  min-height: 40px;
+  margin: 0;
+  font-size: 13px;
+}
+
+.camera-upload-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 10px 14px;
+  border: none;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #748396 0%, #627083 100%);
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  box-shadow: 0 8px 18px rgba(85, 96, 113, 0.14);
+}
+
+.camera-preview-title {
+  margin: 2px 0 10px;
+  color: #243b53;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.camera-preview-empty {
+  padding: 24px 18px 0;
+  font-size: 14px;
+  color: #52606d;
+  text-align: center;
+}
+
+.camera-launch-card {
+  margin-top: 14px;
+  padding: 16px;
+  border-radius: 20px;
+  background: linear-gradient(180deg, #f7fbf8 0%, #edf5f0 100%);
+  border: 1px solid #d7e2dc;
+}
+
+.camera-launch-copy {
+  margin: 0 0 12px;
+  font-size: 13px;
+  color: #52606d;
+}
+
+.secondary-button {
+  background: linear-gradient(135deg, #23814b 0%, #1d7243 100%);
+  box-shadow: 0 10px 22px rgba(29, 114, 67, 0.18);
+}
+
+.muted-button {
+  background: linear-gradient(135deg, #667284 0%, #556071 100%);
+  box-shadow: 0 10px 22px rgba(85, 96, 113, 0.16);
+}
+
+.install-button {
+  width: auto;
+  min-height: 40px;
+  margin: 0;
+  padding: 7px 12px;
+  font-size: 13px;
+}
+
+.auth-card {
+  margin-top: 12px;
+  padding: 18px;
+  border: 1px solid #dbe5df;
+  border-radius: 18px;
+  background: linear-gradient(180deg, #ffffff 0%, #f6faf7 100%);
+}
+
+.auth-title {
+  margin: 0 0 8px;
+  font-size: 18px;
+  font-weight: 800;
+  color: #243b53;
+}
+
+.auth-copy {
+  margin: 0 0 12px;
+  font-size: 14px;
+  color: #52606d;
+}
+
+.meta-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.session-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: #edf7f1;
+  color: #1f6f4a;
+  font-size: 12px;
+  font-weight: 700;
+  border: 1px solid #d7e9de;
+}
+
+.camera-controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+#getLocationButton,
+#retryLocationButton {
+  min-height: 42px;
+  margin: 4px 0 0;
+  font-size: 15px;
+}
+
+.primary-actions {
+  display: grid;
+  gap: 10px;
+}
+
+.secondary-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 10px;
+  align-items: stretch;
+}
+
+#syncPendingButton {
+  grid-column: 1 / -1;
+}
+
+#saveButton:disabled,
+button:disabled {
+  opacity: 0.58;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+#status {
+  min-height: 20px;
+  margin-top: 12px;
+  font-size: 14px;
+  color: #557067;
+}
+
+#status.success {
+  color: #1f6f4a;
+}
+
+#status.warning {
+  color: #8a5a00;
+}
+
+#status.error {
+  color: #b42318;
+}
+
+#summary {
+  display: none;
+  margin-top: 14px;
+  padding: 14px;
+  border-radius: 14px;
+  background: #eef8f1;
+  color: #1f3d2c;
+  text-align: left;
+  font-size: 14px;
+  border: 1px solid #d7e9de;
+}
+
+#offlineQueuePanel {
+  margin-top: 14px;
+  padding: 14px;
+  border-radius: 14px;
+  background: #fff4db;
+  color: #7a4b00;
+  font-size: 15px;
+  font-weight: 600;
+  border: 1px solid #f3dfab;
+}
+
+#offlineQueueCount {
+  font-weight: 700;
+}
+
+#mapLink {
+  display: inline-block;
+  margin-top: 10px;
+  color: #005fcc;
+  font-size: 15px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+@media (max-width: 520px) {
+  body {
+    padding: 10px;
+  }
+
+  .container {
+    padding: 16px 14px 20px;
+    border-radius: 14px;
+  }
+
+  .camera-controls,
+  .status-bar,
+  .secondary-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  #syncPendingButton {
+    grid-column: auto;
+  }
+
+  button {
+    font-size: 15px;
+  }
+
+  .side-nav {
+    width: min(280px, calc(100vw - 28px));
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+  <div class="app-header">
+  <h2>Field Monitor</h2>
+  <p class="app-subtitle">Field-ready farmer records with photo, GPS, and reports.</p>
+  <div class="app-meta">
+    <button id="menuButton" class="menu-button" type="button" hidden aria-label="Open navigation menu">☰</button>
+    <span class="app-badge">Field App</span>
+    <div class="meta-actions">
+      <button id="settingsButton" class="settings-button secondary-button" type="button" hidden aria-label="Open settings">⚙</button>
+    </div>
+  </div>
+  </div>
+  <div id="debugNavStatus" class="debug-nav-status"><strong>Nav Debug:</strong> Waiting for sidebar input.</div>
+  <div id="sidebarOverlay" class="sidebar-overlay"></div>
+  <aside id="sideNav" class="side-nav" aria-hidden="true">
+    <div class="side-nav-header">
+      <p class="side-nav-title">Field Monitor</p>
+      <p class="side-nav-copy">Navigate your dashboard and records.</p>
+    </div>
+    <div id="sideNavList" class="side-nav-list">
+      <button id="summaryTabButton" type="button" aria-label="Home" data-view="summary">
+        <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"></path><path d="M5 9.5V20h14V9.5"></path></svg>
+        <span class="nav-label">Home</span>
+      </button>
+      <button id="recordTabButton" class="active" type="button" aria-label="New Record" data-view="record">
+        <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14"></path><path d="M5 12h14"></path><rect x="4" y="4" width="16" height="16" rx="3"></rect></svg>
+        <span class="nav-label">New Record</span>
+      </button>
+      <button id="activityTabButton" type="button" aria-label="Reports" data-view="activity">
+        <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19h16"></path><path d="M7 16V9"></path><path d="M12 16V5"></path><path d="M17 16v-4"></path></svg>
+        <span class="nav-label">Reports</span>
+      </button>
+    </div>
+  </aside>
+  <div id="settingsOverlay" class="settings-overlay"></div>
+  <aside id="settingsDrawer" class="settings-drawer" aria-hidden="true">
+    <div class="settings-header">
+      <div>
+        <p class="side-nav-title">Profile</p>
+        <p class="side-nav-copy">Manage your app preferences.</p>
+      </div>
+      <button id="settingsCloseButton" class="settings-close muted-button" type="button" aria-label="Close settings">×</button>
+    </div>
+    <div class="profile-card">
+      <div id="profileAvatar" class="profile-avatar">FM</div>
+      <div>
+        <p id="profileName" class="profile-name">Field Monitor User</p>
+        <p class="profile-role">Signed-in account</p>
+      </div>
+    </div>
+    <div class="settings-menu">
+      <button id="settingsItemSettings" class="settings-item active" type="button">
+        <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8.5A3.5 3.5 0 1 0 12 15.5A3.5 3.5 0 1 0 12 8.5Z"></path><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.54V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1-1.54 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.54-1H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.63 9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-1.54V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1 1.54 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 9c.1.38.56 1 1.54 1H21a2 2 0 1 1 0 4h-.09c-.98 0-1.44.62-1.51 1Z"></path></svg>
+        <span class="nav-label">Settings</span>
+      </button>
+      <button id="settingsItemAccount" class="settings-item" type="button">
+        <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 21a8 8 0 0 0-16 0"></path><path d="M12 11a4 4 0 1 0 0-8a4 4 0 0 0 0 8Z"></path></svg>
+        <span class="nav-label">Account</span>
+      </button>
+      <button id="settingsItemHelp" class="settings-item" type="button">
+        <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9.1 9a3 3 0 1 1 5.8 1c-.45 1.02-1.4 1.5-2.2 2.05-.68.47-1.2 1.02-1.2 1.95"></path><path d="M12 17h.01"></path><circle cx="12" cy="12" r="9"></circle></svg>
+        <span class="nav-label">Help</span>
+      </button>
+    </div>
+    <div class="settings-app-card">
+      <div class="settings-app-row">
+        <p class="settings-app-label">App</p>
+        <span id="appModeBadge" class="app-badge">Web App</span>
+      </div>
+      <p class="settings-app-version">Version 1.0.1</p>
+      <button id="installAppButton" class="secondary-button install-button drawer-install-button" type="button" hidden>Install App</button>
+      <button id="drawerLogoutButton" class="logout-drawer-button" type="button">
+        <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><path d="M16 17l5-5-5-5"></path><path d="M21 12H9"></path></svg>
+        <span class="nav-label">Logout</span>
+      </button>
+    </div>
+    <div class="drawer-spacer"></div>
+  </aside>
+
+  <div id="loginPanel" class="auth-card">
+    <p class="auth-title">Sign In</p>
+    <p class="auth-copy">Log in to load your assigned extension worker and activity session.</p>
+    <div class="field-group">
+      <label for="usernameInput">Username</label>
+      <input type="text" id="usernameInput" placeholder="Enter username" autocomplete="username">
+    </div>
+    <div class="field-group">
+      <label for="passwordInput">Password</label>
+      <input type="password" id="passwordInput" placeholder="Enter password" autocomplete="current-password">
+    </div>
+    <button id="loginButton" type="button">Login</button>
+    <p id="loginStatus" class="helper-text"></p>
+  </div>
+
+  <div id="changePasswordPanel" class="auth-card" hidden>
+    <p class="auth-title">Change Password</p>
+    <p class="auth-copy">This account is using a default password. Set a new password before using the app.</p>
+    <div class="field-group">
+      <label for="newPasswordInput">New Password</label>
+      <input type="password" id="newPasswordInput" placeholder="Enter new password" autocomplete="new-password">
+    </div>
+    <div class="field-group">
+      <label for="confirmPasswordInput">Confirm New Password</label>
+      <input type="password" id="confirmPasswordInput" placeholder="Confirm new password" autocomplete="new-password">
+    </div>
+    <button id="changePasswordButton" type="button">Update Password</button>
+    <p id="changePasswordStatus" class="helper-text"></p>
+  </div>
+
+  <div id="appContent" hidden>
+  <div id="recordView" class="view-panel">
+  <div class="section-card">
+    <p class="section-title">Location</p>
+    <div id="statusBar" class="status-bar">
+      <div id="networkBadge" class="status-pill neutral">Checking Network...</div>
+      <div id="gpsBadge" class="status-pill neutral">GPS Not Captured</div>
+    </div>
+    <div class="camera-controls">
+      <button id="getLocationButton" type="button">Get GPS</button>
+      <button id="retryLocationButton" class="secondary-button" type="button">Retry GPS</button>
+    </div>
+    <p id="location">Location not fetched</p>
+    <p id="coords">Latitude: -- | Longitude: --</p>
+    <p id="accuracy">Accuracy: --</p>
+    <p id="address">Address: --</p>
+    <iframe
+      id="map"
+      title="Map Preview"
+      loading="lazy"
+      referrerpolicy="no-referrer-when-downgrade"
+      src="https://www.openstreetmap.org/export/embed.html?bbox=120.981500%2C14.597000%2C120.986500%2C14.602000&layer=mapnik&marker=14.599500%2C120.984200">
+    </iframe>
+    <a id="mapLink" href="https://www.google.com/maps/search/?api=1&query=14.5995,120.9842" target="_blank" rel="noopener noreferrer">Open Map</a>
+  </div>
+
+  <div class="section-card">
+    <p class="section-title">Record Details</p>
+    <div id="extensionWorkerField" class="field-group" hidden>
+      <label for="extensionWorkerName">Extension Worker</label>
+      <select id="extensionWorkerName">
+        <option value="">Select extension worker</option>
+        <option value="Christopher D. Queddeng">Christopher D. Queddeng</option>
+        <option value="Karla May E. Cardona">Karla May E. Cardona</option>
+        <option value="Bryanne Marke William R. Simeon">Bryanne Marke William R. Simeon</option>
+        <option value="Arvin B. Solito">Arvin B. Solito</option>
+        <option value="Mae Anne F. Mina">Mae Anne F. Mina</option>
+        <option value="Emer C. Hernandez">Emer C. Hernandez</option>
+        <option value="Fericel B. Gappe">Fericel B. Gappe</option>
+        <option value="Marjory L. Basa">Marjory L. Basa</option>
+        <option value="Larry R. Bagain">Larry R. Bagain</option>
+        <option value="Jessa Rose A. Balbin">Jessa Rose A. Balbin</option>
+        <option value="Gelre John Tagapan">Gelre John Tagapan</option>
+        <option value="Edmund M. Macapinlac">Edmund M. Macapinlac</option>
+        <option value="Rosemarie J. Asuero">Rosemarie J. Asuero</option>
+        <option value="Lyann B. Malsi">Lyann B. Malsi</option>
+        <option value="Frederick B. Aggabao Jr.">Frederick B. Aggabao Jr.</option>
+        <option value="Christian Ray C. Gusto">Christian Ray C. Gusto</option>
+        <option value="Fe V. Angangan">Fe V. Angangan</option>
+        <option value="Gilbeys E. Agsunod">Gilbeys E. Agsunod</option>
+        <option value="Rex S. Martinez">Rex S. Martinez</option>
+        <option value="Anthony I. Cafirma">Anthony I. Cafirma</option>
+        <option value="John C. Fenandez">John C. Fenandez</option>
+      </select>
+    </div>
+    <div class="field-group">
+      <label for="farmerName">Farmer Name</label>
+      <input type="text" id="farmerName" placeholder="Enter farmer name" autocomplete="name" maxlength="80">
+    </div>
+    <div class="field-group">
+      <label for="farmerType">Farmer Type</label>
+      <select id="farmerType">
+        <option value="TCGS">TCGS</option>
+        <option value="Non-TCGS">Non-TCGS</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="section-card">
+    <p class="section-title">Photo Evidence</p>
+    <p class="inline-helper">Take a photo or upload one before saving.</p>
+    <div class="camera-launch-card">
+      <p class="camera-launch-copy">Open the camera only when you are ready to capture a photo.</p>
+      <button id="openCameraButton" class="secondary-button" type="button">Open Camera</button>
+    </div>
+    <div id="cameraShell" class="camera-shell" hidden>
+      <div class="camera-stage">
+        <video id="camera" autoplay playsinline></video>
+        <div id="cameraFlash" class="capture-flash"></div>
+        <div class="camera-topbar">
+          <div id="cameraStatusPill" class="camera-status-pill">Camera idle</div>
+          <button id="switchCameraButton" class="camera-icon-button" type="button" aria-label="Flip Camera">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M7 7h7a4 4 0 0 1 4 4v1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M18 8l1 4-4-1" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M17 17H10a4 4 0 0 1-4-4v-1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M6 16l-1-4 4 1" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+        </div>
+        <div class="camera-bottom-controls">
+          <button id="takePhotoButton" class="shutter-button" type="button" aria-label="Take Photo"></button>
+        </div>
+      </div>
+    </div>
+    <div class="camera-secondary-actions">
+      <label for="imageInput" class="camera-upload-button">Upload Photo</label>
+      <button id="closeCameraButton" class="muted-button" type="button">Close Camera</button>
+    </div>
+    <canvas id="snapshotCanvas" style="display: none;"></canvas>
+    <input type="file" id="imageInput" accept="image/*" hidden>
+    <p class="camera-preview-title">Captured Photo</p>
+    <img id="preview" alt="Captured image preview">
+    <div id="previewEmptyState" class="camera-preview-empty">No photo captured yet.</div>
+    <div id="photoCameraControls" class="camera-controls">
+      <button id="retakePhotoButton" class="muted-button" type="button">Retake</button>
+    </div>
+  </div>
+
+  <div class="section-card">
+    <p class="section-title">Actions</p>
+    <div class="primary-actions">
+      <button id="saveButton" type="button">Save Record</button>
+    </div>
+    <div class="secondary-actions">
+      <button id="saveWithoutGpsButton" class="secondary-button" type="button">Save No GPS</button>
+      <button id="newRecordButton" class="secondary-button" type="button">New Record</button>
+      <button id="syncPendingButton" class="muted-button" type="button">Sync Now</button>
+    </div>
+  </div>
+  <p id="status" role="status" aria-live="polite"></p>
+  <div id="offlineQueuePanel">Pending uploads: <span id="offlineQueueCount">0</span></div>
+  <div id="summary"></div>
+  </div>
+
+  <div id="activityView" class="view-panel" hidden>
+  <div class="section-card">
+    <p class="section-title">Your Reports</p>
+    <p id="activityEmpty" class="inline-helper">No records saved on this device for this user yet.</p>
+    <div id="activityList"></div>
+  </div>
+  </div>
+
+  <div id="summaryView" class="view-panel" hidden>
+  <div class="section-card">
+    <p class="section-title">Farmer Summary</p>
+    <div class="summary-grid">
+      <div class="summary-metric">
+        <p class="summary-label">Today</p>
+        <p id="dailySummaryValue" class="summary-value">0</p>
+      </div>
+      <div class="summary-metric">
+        <p class="summary-label">This Week</p>
+        <p id="weeklySummaryValue" class="summary-value">0</p>
+      </div>
+    </div>
+    <p id="summaryEmpty" class="inline-helper">No saved records available for summary yet.</p>
+    <div id="summaryTableWrap"></div>
+  </div>
+  </div>
+  </div>
+</div>
+
+<script>
+let latitude = null;
+let longitude = null;
+let locationAccuracy = null;
+let imageBase64 = "";
+let originalImageBase64 = "";
+let previewImageBase64 = "";
+let cameraStream = null;
+let cameraTrack = null;
+let currentAddress = "";
+let currentFacingMode = "environment";
+let isSaving = false;
+let deferredInstallPrompt = null;
+let lastSidebarTouchPoint = null;
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby4Qjq3ziZk1UzIW9NCa1eKTIe3TWtofyH1ORKFRRCLGLAT8uUWSxgNrEIAk8mngxvvwA/exec";
+const ATTENDANCE_HISTORY_KEY = "fieldAttendanceHistory";
+const PENDING_UPLOADS_KEY = "fieldAttendancePendingUploads";
+const SESSION_KEY = "fieldMonitorSession";
+let sharedReportEntriesCache = [];
+let sharedReportEntriesLoadedFor = "";
+const MAX_SAVE_ACCURACY_METERS = 9999;
+const STRONG_ACCURACY_METERS = 20;
+const MODERATE_ACCURACY_METERS = 50;
+const WEAK_ACCURACY_METERS = 100;
+
+const els = {
+  location: document.getElementById("location"),
+  coords: document.getElementById("coords"),
+  accuracy: document.getElementById("accuracy"),
+  address: document.getElementById("address"),
+  map: document.getElementById("map"),
+  mapLink: document.getElementById("mapLink"),
+  appModeBadge: document.getElementById("appModeBadge"),
+  menuButton: document.getElementById("menuButton"),
+  sidebarOverlay: document.getElementById("sidebarOverlay"),
+  sideNav: document.getElementById("sideNav"),
+  settingsButton: document.getElementById("settingsButton"),
+  settingsOverlay: document.getElementById("settingsOverlay"),
+  settingsDrawer: document.getElementById("settingsDrawer"),
+  settingsCloseButton: document.getElementById("settingsCloseButton"),
+  profileAvatar: document.getElementById("profileAvatar"),
+  profileName: document.getElementById("profileName"),
+  settingsItemSettings: document.getElementById("settingsItemSettings"),
+  settingsItemAccount: document.getElementById("settingsItemAccount"),
+  settingsItemHelp: document.getElementById("settingsItemHelp"),
+  drawerLogoutButton: document.getElementById("drawerLogoutButton"),
+  statusBar: document.getElementById("statusBar"),
+  installAppButton: document.getElementById("installAppButton"),
+  networkBadge: document.getElementById("networkBadge"),
+  gpsBadge: document.getElementById("gpsBadge"),
+  loginPanel: document.getElementById("loginPanel"),
+  changePasswordPanel: document.getElementById("changePasswordPanel"),
+  appContent: document.getElementById("appContent"),
+  usernameInput: document.getElementById("usernameInput"),
+  passwordInput: document.getElementById("passwordInput"),
+  loginButton: document.getElementById("loginButton"),
+  loginStatus: document.getElementById("loginStatus"),
+  newPasswordInput: document.getElementById("newPasswordInput"),
+  confirmPasswordInput: document.getElementById("confirmPasswordInput"),
+  changePasswordButton: document.getElementById("changePasswordButton"),
+  changePasswordStatus: document.getElementById("changePasswordStatus"),
+  recordTabButton: document.getElementById("recordTabButton"),
+  activityTabButton: document.getElementById("activityTabButton"),
+  summaryTabButton: document.getElementById("summaryTabButton"),
+  sideNavList: document.getElementById("sideNavList"),
+  recordView: document.getElementById("recordView"),
+  activityView: document.getElementById("activityView"),
+  summaryView: document.getElementById("summaryView"),
+  farmerName: document.getElementById("farmerName"),
+  farmerType: document.getElementById("farmerType"),
+  extensionWorkerName: document.getElementById("extensionWorkerName"),
+  imageInput: document.getElementById("imageInput"),
+  preview: document.getElementById("preview"),
+  previewEmptyState: document.getElementById("previewEmptyState"),
+  cameraShell: document.getElementById("cameraShell"),
+  camera: document.getElementById("camera"),
+  cameraFlash: document.getElementById("cameraFlash"),
+  cameraStatusPill: document.getElementById("cameraStatusPill"),
+  snapshotCanvas: document.getElementById("snapshotCanvas"),
+  saveButton: document.getElementById("saveButton"),
+  saveWithoutGpsButton: document.getElementById("saveWithoutGpsButton"),
+  newRecordButton: document.getElementById("newRecordButton"),
+  syncPendingButton: document.getElementById("syncPendingButton"),
+  status: document.getElementById("status"),
+  offlineQueueCount: document.getElementById("offlineQueueCount"),
+  summary: document.getElementById("summary"),
+  activityEmpty: document.getElementById("activityEmpty"),
+  activityList: document.getElementById("activityList"),
+  dailySummaryValue: document.getElementById("dailySummaryValue"),
+  weeklySummaryValue: document.getElementById("weeklySummaryValue"),
+  summaryEmpty: document.getElementById("summaryEmpty"),
+  summaryTableWrap: document.getElementById("summaryTableWrap"),
+  getLocationButton: document.getElementById("getLocationButton"),
+  retryLocationButton: document.getElementById("retryLocationButton"),
+  openCameraButton: document.getElementById("openCameraButton"),
+  switchCameraButton: document.getElementById("switchCameraButton"),
+  takePhotoButton: document.getElementById("takePhotoButton"),
+  retakePhotoButton: document.getElementById("retakePhotoButton"),
+  closeCameraButton: document.getElementById("closeCameraButton"),
+  cameraControls: document.getElementById("photoCameraControls"),
+  debugNavStatus: document.getElementById("debugNavStatus")
+};
+// ✅ FIX NAV BUTTONS (CORRECT PLACE)
+els.summaryTabButton.onclick = () => showMainView("summary");
+els.recordTabButton.onclick = () => showMainView("record");
+els.activityTabButton.onclick = () => showMainView("activity");
+function promoteOverlayElements() {
+  [els.sidebarOverlay, els.sideNav, els.settingsOverlay, els.settingsDrawer].forEach((element) => {
+    if (element && element.parentElement !== document.body) {
+      document.body.appendChild(element);
+    }
+  });
+}
+
+function syncAppShellBounds() {
+  const container = document.querySelector(".container");
+  if (!container) {
+    return;
+  }
+
+  const rect = container.getBoundingClientRect();
+  const shellLeft = Math.max(0, rect.left);
+  const shellWidth = Math.max(280, rect.width);
+  const shellRightGap = Math.max(0, window.innerWidth - rect.right);
+
+  document.documentElement.style.setProperty("--app-shell-left", shellLeft + "px");
+  document.documentElement.style.setProperty("--app-shell-width", shellWidth + "px");
+  document.documentElement.style.setProperty("--app-shell-right-gap", shellRightGap + "px");
+}
+
+function setStatus(message, tone) {
+  els.status.innerText = message;
+  els.status.className = tone || "";
+}
+
+function setBadge(element, message, tone) {
+  element.innerText = message;
+  element.className = "status-pill " + (tone || "neutral");
+}
+
+function setLoginStatus(message, tone) {
+  els.loginStatus.innerText = message;
+  els.loginStatus.style.color = tone === "error"
+    ? "#b42318"
+    : (tone === "success" ? "#1f6f4a" : "#52606d");
+}
+
+function setChangePasswordStatus(message, tone) {
+  els.changePasswordStatus.innerText = message;
+  els.changePasswordStatus.style.color = tone === "error"
+    ? "#b42318"
+    : (tone === "success" ? "#1f6f4a" : "#52606d");
+}
+
+function setDebugNav(message) {
+  if (!els.debugNavStatus) {
+    return;
+  }
+  els.debugNavStatus.innerHTML = "<strong>Nav Debug:</strong> " + message;
+}
+
+function pushDebugNav(message) {
+  if (!els.debugNavStatus) {
+    return;
+  }
+  const current = els.debugNavStatus.textContent
+    .replace(/^Nav Debug:\s*/i, "")
+    .trim();
+  const next = current && current !== "Waiting for sidebar input."
+    ? current + " -> " + message
+    : message;
+  els.debugNavStatus.innerHTML = "<strong>Nav Debug:</strong> " + next;
+}
+
+function animateViewPanel(panel) {
+  panel.classList.remove("panel-enter");
+  void panel.offsetWidth;
+  panel.classList.add("panel-enter");
+  window.setTimeout(() => {
+    panel.classList.remove("panel-enter");
+  }, 240);
+}
+
+function syncDrawerMode() {
+  const drawerOpen =
+    els.sideNav.classList.contains("open") ||
+    els.settingsDrawer.classList.contains("open");
+  document.body.classList.toggle("drawer-open", drawerOpen);
+}
+
+function closeSidebar() {
+  els.sideNav.classList.remove("open");
+  els.sidebarOverlay.classList.remove("open");
+  els.sideNav.setAttribute("aria-hidden", "true");
+  els.sideNav.style.display = "none";
+  syncDrawerMode();
+  pushDebugNav("Sidebar closed");
+}
+
+function openSidebar() {
+  els.sideNav.style.display = "flex";
+  els.sideNav.classList.add("open");
+  els.sidebarOverlay.classList.add("open");
+  els.sideNav.setAttribute("aria-hidden", "false");
+  syncDrawerMode();
+  setDebugNav("Sidebar opened. Tap Home, New Record, or Reports.");
+}
+
+function closeSettingsDrawer() {
+  els.settingsDrawer.classList.remove("open");
+  els.settingsOverlay.classList.remove("open");
+  els.settingsDrawer.setAttribute("aria-hidden", "true");
+  els.settingsDrawer.style.display = "none";
+  syncDrawerMode();
+}
+
+function openSettingsDrawer() {
+  els.settingsDrawer.style.display = "flex";
+  els.settingsDrawer.classList.add("open");
+  els.settingsOverlay.classList.add("open");
+  els.settingsDrawer.setAttribute("aria-hidden", "false");
+  syncDrawerMode();
+}
+
+function setActiveSettingsItem(targetButton) {
+  [els.settingsItemSettings, els.settingsItemAccount, els.settingsItemHelp].forEach((button) => {
+    button.classList.toggle("active", button === targetButton);
+  });
+}
+
+function getInitials(name) {
+  const words = String(name || "").trim().split(/\s+/).filter(Boolean);
+  if (words.length === 0) {
+    return "FM";
+  }
+  return words.slice(0, 2).map((word) => word.charAt(0).toUpperCase()).join("");
+}
+
+function showMainView(viewName) {
+  pushDebugNav("showMainView(\"" + viewName + "\")");
+  const showActivity = viewName === "activity";
+  const showSummary = viewName === "summary";
+  els.recordView.hidden = showActivity || showSummary;
+  els.activityView.hidden = !showActivity;
+  els.summaryView.hidden = !showSummary;
+  els.recordView.style.display = showActivity || showSummary ? "none" : "block";
+  els.activityView.style.display = showActivity ? "block" : "none";
+  els.summaryView.style.display = showSummary ? "block" : "none";
+  els.recordTabButton.classList.toggle("active", !showActivity && !showSummary);
+  els.activityTabButton.classList.toggle("active", showActivity);
+  els.summaryTabButton.classList.toggle("active", showSummary);
+  els.recordTabButton.setAttribute("aria-current", !showActivity && !showSummary ? "page" : "false");
+  els.activityTabButton.setAttribute("aria-current", showActivity ? "page" : "false");
+  els.summaryTabButton.setAttribute("aria-current", showSummary ? "page" : "false");
+
+  if (showActivity) {
+    animateViewPanel(els.activityView);
+    renderActivity(true).catch(() => {});
+  } else if (showSummary) {
+    animateViewPanel(els.summaryView);
+    renderSummary(true).catch(() => {});
+  } else {
+    animateViewPanel(els.recordView);
+  }
+
+  closeSidebar();
+}
+
+window.showMainView = showMainView;
+
+function getSidebarViewButtonFromPoint(clientX, clientY) {
+  const buttons = [
+    els.summaryTabButton,
+    els.recordTabButton,
+    els.activityTabButton
+  ];
+
+  for (let index = 0; index < buttons.length; index += 1) {
+    const button = buttons[index];
+    const rect = button.getBoundingClientRect();
+    if (
+      clientX >= rect.left &&
+      clientX <= rect.right &&
+      clientY >= rect.top &&
+      clientY <= rect.bottom
+    ) {
+      return button;
+    }
+  }
+
+  let nearestButton = null;
+  let nearestDistance = Number.POSITIVE_INFINITY;
+  buttons.forEach((button) => {
+    const rect = button.getBoundingClientRect();
+    const centerY = rect.top + rect.height / 2;
+    const distance = Math.abs(clientY - centerY);
+    if (distance < nearestDistance) {
+      nearestDistance = distance;
+      nearestButton = button;
+    }
+  });
+
+  return nearestButton;
+}
+
+function rememberSidebarTouchPoint(clientX, clientY) {
+  lastSidebarTouchPoint = {
+    x: clientX,
+    y: clientY,
+    timestamp: Date.now()
+  };
+}
+
+function readSession() {
+  try {
+    const raw = window.localStorage.getItem(SESSION_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch (error) {
+    return null;
+  }
+}
+
+function writeSession(session) {
+  try {
+    window.localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+  } catch (error) {
+    console.warn("Unable to save session locally.", error);
+  }
+}
+
+function clearSession() {
+  try {
+    window.localStorage.removeItem(SESSION_KEY);
+  } catch (error) {
+    console.warn("Unable to clear session locally.", error);
+  }
+}
+
+function applySession(session) {
+  const signedIn = Boolean(session && session.extensionWorkerName);
+  const needsPasswordChange = Boolean(session && session.mustChangePassword);
+  document.body.classList.toggle("auth-mode", !signedIn || needsPasswordChange);
+  els.statusBar.hidden = !signedIn || needsPasswordChange;
+  els.loginPanel.hidden = signedIn || needsPasswordChange;
+  els.changePasswordPanel.hidden = !needsPasswordChange;
+  els.appContent.hidden = !signedIn || needsPasswordChange;
+  els.menuButton.hidden = !signedIn || needsPasswordChange;
+  els.settingsButton.hidden = !signedIn || needsPasswordChange;
+
+  if (!signedIn) {
+    sharedReportEntriesCache = [];
+    sharedReportEntriesLoadedFor = "";
+    closeSidebar();
+    closeSettingsDrawer();
+    els.profileName.innerText = "Field Monitor User";
+    els.profileAvatar.innerText = "FM";
+    els.extensionWorkerName.value = "";
+    els.extensionWorkerName.disabled = false;
+    els.changePasswordPanel.hidden = true;
+    renderActivity().catch(() => {});
+    updateSaveButtonState();
+    return;
+  }
+
+  els.profileName.innerText = session.extensionWorkerName;
+  els.profileAvatar.innerText = getInitials(session.extensionWorkerName);
+  els.extensionWorkerName.value = session.extensionWorkerName;
+  els.extensionWorkerName.disabled = true;
+  els.usernameInput.value = session.username || "";
+  if (!needsPasswordChange) {
+    els.passwordInput.value = "";
+  }
+  setLoginStatus("", "");
+  setChangePasswordStatus("", "");
+
+  if (needsPasswordChange) {
+    closeSidebar();
+    closeSettingsDrawer();
+    setStatus("Change your default password to continue.", "warning");
+    els.newPasswordInput.focus();
+  }
+
+  renderActivity().catch(() => {});
+  renderSummary().catch(() => {});
+  updateSaveButtonState();
+}
+
+async function login() {
+  const username = els.usernameInput.value.trim();
+  const password = els.passwordInput.value;
+
+  if (!username || !password) {
+    setLoginStatus("Enter your username and password.", "error");
+    return;
+  }
+
+  els.loginButton.disabled = true;
+  setLoginStatus("Signing in...", "");
+
+  try {
+    const response = await fetch(APPS_SCRIPT_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "text/plain;charset=utf-8"
+      },
+      body: JSON.stringify({
+        action: "login",
+        username: username,
+        password: password
+      })
+    });
+
+    const responseText = await response.text();
+    let responseJson = null;
+
+    try {
+      responseJson = responseText ? JSON.parse(responseText) : null;
+    } catch (error) {
+      responseJson = null;
+    }
+
+    if (!response.ok || !responseJson || responseJson.success === false) {
+      throw new Error((responseJson && responseJson.message) || "Login failed");
+    }
+
+    const session = {
+      username: responseJson.username || username,
+      extensionWorkerName: responseJson.extensionWorkerName || (responseJson.user && responseJson.user.extensionWorkerName) || "",
+      currentPassword: password,
+      mustChangePassword: Boolean(
+        responseJson.mustChangePassword ||
+        (responseJson.user && responseJson.user.mustChangePassword)
+      )
+    };
+
+    if (!session.extensionWorkerName) {
+      throw new Error("Login succeeded, but no extension worker was assigned.");
+    }
+
+    writeSession(session);
+    applySession(session);
+    if (session.mustChangePassword) {
+      setLoginStatus("Default password detected. Change your password to continue.", "success");
+    } else {
+      setLoginStatus("Login successful.", "success");
+      setStatus("Signed in as " + session.extensionWorkerName + ".", "success");
+      els.farmerName.focus();
+    }
+  } catch (error) {
+    setLoginStatus(error && error.message ? error.message : "Login failed.", "error");
+  } finally {
+    els.loginButton.disabled = false;
+  }
+}
+
+async function changePassword() {
+  const session = readSession();
+  const newPassword = els.newPasswordInput.value;
+  const confirmPassword = els.confirmPasswordInput.value;
+
+  if (!session || !session.username) {
+    setChangePasswordStatus("Sign in again to change your password.", "error");
+    applySession(null);
+    return;
+  }
+
+  if (!newPassword || newPassword.length < 6) {
+    setChangePasswordStatus("New password must be at least 6 characters.", "error");
+    return;
+  }
+
+  if (newPassword !== confirmPassword) {
+    setChangePasswordStatus("Passwords do not match.", "error");
+    return;
+  }
+
+  els.changePasswordButton.disabled = true;
+  setChangePasswordStatus("Updating password...", "");
+
+  try {
+    const response = await fetch(APPS_SCRIPT_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "text/plain;charset=utf-8"
+      },
+      body: JSON.stringify({
+        action: "changePassword",
+        username: session.username,
+        password: session.currentPassword || els.passwordInput.value,
+        newPassword: newPassword
+      })
+    });
+
+    const responseText = await response.text();
+    let responseJson = null;
+
+    try {
+      responseJson = responseText ? JSON.parse(responseText) : null;
+    } catch (error) {
+      responseJson = null;
+    }
+
+    if (!response.ok || !responseJson || responseJson.success === false) {
+      throw new Error((responseJson && responseJson.message) || "Password update failed");
+    }
+
+    const updatedSession = {
+      username: responseJson.username || session.username,
+      extensionWorkerName: responseJson.extensionWorkerName || session.extensionWorkerName,
+      currentPassword: newPassword,
+      mustChangePassword: false
+    };
+
+    writeSession(updatedSession);
+    applySession(updatedSession);
+    els.passwordInput.value = newPassword;
+    els.newPasswordInput.value = "";
+    els.confirmPasswordInput.value = "";
+    setChangePasswordStatus("Password updated successfully.", "success");
+    setStatus("Password updated. You can now use the app.", "success");
+    els.farmerName.focus();
+  } catch (error) {
+    setChangePasswordStatus(error && error.message ? error.message : "Password update failed.", "error");
+  } finally {
+    els.changePasswordButton.disabled = false;
+  }
+}
+
+function logout() {
+  clearSession();
+  resetForm();
+  applySession(null);
+  els.passwordInput.value = "";
+  els.newPasswordInput.value = "";
+  els.confirmPasswordInput.value = "";
+  setLoginStatus("Signed out.", "");
+  setChangePasswordStatus("", "");
+  setStatus("Sign in to continue.", "");
+  els.usernameInput.focus();
+}
+
+function isAndroidAppContainer() {
+  return window.location.hostname === "appassets.androidplatform.net";
+}
+
+function isStandaloneAppMode() {
+  return window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+}
+
+function updateAppModeBadge() {
+  if (isAndroidAppContainer()) {
+    els.appModeBadge.innerText = "Android App";
+    return;
+  }
+
+  els.appModeBadge.innerText = isStandaloneAppMode() ? "App Mode" : "Web App";
+}
+
+function updateInstallButtonVisibility() {
+  const canInstall = Boolean(deferredInstallPrompt) && !isStandaloneAppMode() && !isAndroidAppContainer();
+  els.installAppButton.hidden = !canInstall;
+}
+
+function clearLocationState() {
+  latitude = null;
+  longitude = null;
+  locationAccuracy = null;
+  currentAddress = "";
+  els.coords.innerText = "Latitude: -- | Longitude: --";
+  els.accuracy.innerText = "Accuracy: --";
+  els.address.innerText = "Address: --";
+  updateGpsBadge();
+}
+
+function updateCameraButtons() {
+  const hasStream = Boolean(cameraStream);
+  const hasPhoto = Boolean(originalImageBase64 || imageBase64);
+  els.switchCameraButton.disabled = !hasStream;
+  els.takePhotoButton.disabled = !hasStream;
+  els.closeCameraButton.disabled = !hasStream;
+  els.retakePhotoButton.disabled = !hasPhoto;
+  els.cameraControls.classList.toggle("camera-active", hasStream);
+  els.cameraShell.classList.toggle("camera-active", hasStream);
+  els.cameraShell.hidden = !hasStream;
+  if (hasStream) {
+    els.cameraStatusPill.innerText = currentFacingMode === "user" ? "Front Camera" : "Back Camera";
+  } else if (hasPhoto) {
+    els.cameraStatusPill.innerText = "Photo Ready";
+  } else {
+    els.cameraStatusPill.innerText = "Camera idle";
+  }
+}
+
+function flashCameraCapture() {
+  els.cameraFlash.classList.remove("active");
+  void els.cameraFlash.offsetWidth;
+  els.cameraFlash.classList.add("active");
+}
+
+function getCameraErrorMessage(error) {
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    return "Camera is not supported on this device.";
+  }
+
+  if (!error) {
+    return "Unable to open camera.";
+  }
+
+  if (error.name === "NotAllowedError" || error.name === "SecurityError") {
+    return "Camera permission denied. Please allow camera access and try again.";
+  }
+
+  if (error.name === "NotFoundError" || error.name === "DevicesNotFoundError") {
+    return "No camera was found on this device.";
+  }
+
+  if (error.name === "NotReadableError" || error.name === "TrackStartError") {
+    return "The camera is already being used by another app.";
+  }
+
+  if (error.name === "OverconstrainedError" || error.name === "ConstraintNotSatisfiedError") {
+    return "Requested camera is not available on this device.";
+  }
+
+  return "Unable to open camera.";
+}
+
+function getSaveButtonLabel() {
+  return "Save Record";
+}
+
+function updateNetworkBadge() {
+  if (navigator.onLine) {
+    const pendingCount = readPendingUploads().length;
+    if (pendingCount > 0) {
+      setBadge(els.networkBadge, "Online | Pending Sync: " + pendingCount, "warning");
+    } else {
+      setBadge(els.networkBadge, "Online", "success");
+    }
+    return;
+  }
+
+  setBadge(els.networkBadge, "Offline", "error");
+}
+
+function updateGpsBadge() {
+  if (latitude !== null && longitude !== null) {
+    if (locationAccuracy !== null && locationAccuracy <= STRONG_ACCURACY_METERS) {
+      setBadge(els.gpsBadge, "GPS Captured", "success");
+    } else {
+      setBadge(els.gpsBadge, "GPS Captured | Weak Signal", "warning");
+    }
+    return;
+  }
+
+  setBadge(els.gpsBadge, "GPS Not Captured", "warning");
+}
+
+function getRecordIdentity(farmerName, farmerType, extensionWorkerName) {
+  return [
+    normalizeFarmerName(farmerName),
+    String(farmerType || "").trim().toLowerCase(),
+    String(extensionWorkerName || "").trim().toLowerCase()
+  ].join("|");
+}
+
+function readPendingUploads() {
+  try {
+    const raw = window.localStorage.getItem(PENDING_UPLOADS_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (error) {
+    return [];
+  }
+}
+
+function writePendingUploads(entries) {
+  try {
+    window.localStorage.setItem(PENDING_UPLOADS_KEY, JSON.stringify(entries));
+    return true;
+  } catch (error) {
+    console.warn("Unable to store pending uploads locally.", error);
+    return false;
+  }
+}
+
+function updatePendingUploadsUi() {
+  els.offlineQueueCount.innerText = String(readPendingUploads().length);
+  updateNetworkBadge();
+}
+
+function queuePendingUpload(record) {
+  const pendingUploads = readPendingUploads();
+  pendingUploads.push(record);
+  const stored = writePendingUploads(pendingUploads);
+  updatePendingUploadsUi();
+  return stored;
+}
+
+function updateSaveButtonState() {
+  const session = readSession();
+  const hasFarmerName = Boolean(els.farmerName.value.trim());
+  const hasExtensionWorkerName = Boolean((session && session.extensionWorkerName) || els.extensionWorkerName.value);
+  const hasPhoto = Boolean(originalImageBase64 || imageBase64);
+  const hasGps = latitude !== null && longitude !== null;
+
+  els.saveButton.innerText = isSaving
+    ? "Saving Record..."
+    : getSaveButtonLabel();
+
+  els.saveButton.disabled = isSaving || !hasFarmerName || !hasExtensionWorkerName || !hasPhoto;
+  els.saveWithoutGpsButton.disabled = isSaving || hasGps || !hasFarmerName || !hasExtensionWorkerName || !hasPhoto;
+  els.newRecordButton.disabled = isSaving;
+  els.syncPendingButton.disabled = isSaving || readPendingUploads().length === 0;
+}
+
+async function getLocation() {
+  if (!navigator.geolocation) {
+    alert("Geolocation not supported");
+    return;
+  }
+
+  clearLocationState();
+  els.location.innerText = "Getting best GPS reading...";
+  els.accuracy.innerText = "Accuracy: measuring...";
+  setStatus("Checking GPS signal...", "");
+  updateSaveButtonState();
+
+  try {
+    const position = await getBestPosition();
+    await applyLocation(position);
+  } catch (error) {
+    const message = getLocationErrorMessage(error);
+    els.location.innerText = message;
+    clearLocationState();
+    setStatus(message + " You can retry GPS or save without GPS.", "error");
+    updateSaveButtonState();
+    alert(message + " You can retry GPS or save without GPS.");
+  }
+}
+
+function getBestPosition() {
+  return new Promise((resolve, reject) => {
+    let bestPosition = null;
+    let settled = false;
+
+    const finish = (position) => {
+      if (settled) {
+        return;
+      }
+
+      settled = true;
+      navigator.geolocation.clearWatch(watchId);
+      clearTimeout(timeoutId);
+      resolve(position);
+    };
+
+    const fail = (error) => {
+      if (settled) {
+        return;
+      }
+
+      settled = true;
+      navigator.geolocation.clearWatch(watchId);
+      clearTimeout(timeoutId);
+      reject(error);
+    };
+
+    const watchId = navigator.geolocation.watchPosition(
+      (position) => {
+        if (!bestPosition || position.coords.accuracy < bestPosition.coords.accuracy) {
+          bestPosition = position;
+          els.accuracy.innerText = "Accuracy: " + Math.round(position.coords.accuracy) + " meters";
+        }
+
+        if (position.coords.accuracy <= 15) {
+          finish(position);
+        }
+      },
+      fail,
+      {
+        enableHighAccuracy: true,
+        timeout: 30000,
+        maximumAge: 0
+      }
+    );
+
+    const timeoutId = setTimeout(() => {
+      if (bestPosition) {
+        finish(bestPosition);
+      } else {
+        fail({ code: 3 });
+      }
+    }, 18000);
+  });
+}
+
+async function applyLocation(position) {
+  latitude = position.coords.latitude;
+  longitude = position.coords.longitude;
+  locationAccuracy = position.coords.accuracy;
+
+  els.location.innerText = "Location captured";
+  els.coords.innerText = "Latitude: " + latitude + " | Longitude: " + longitude;
+  els.accuracy.innerText = "Accuracy: " + Math.round(locationAccuracy) + " meters";
+  els.map.src = buildMapUrl(latitude, longitude);
+  els.mapLink.href =
+    "https://www.google.com/maps/search/?api=1&query=" +
+    encodeURIComponent(latitude + "," + longitude);
+  els.address.innerText = "Address: Looking up...";
+
+  await lookupAddress(latitude, longitude);
+
+  if (locationAccuracy > WEAK_ACCURACY_METERS) {
+    setStatus("GPS accuracy is weak, but you can still save. Retake location if you need a more precise pin.", "warning");
+  } else if (locationAccuracy > MODERATE_ACCURACY_METERS) {
+    setStatus("GPS captured with fair accuracy. You can save now, but retake location if the map looks off.", "warning");
+  } else if (locationAccuracy > STRONG_ACCURACY_METERS) {
+    setStatus("GPS captured, but accuracy is still moderate. Retake location if the map looks off.", "warning");
+  } else {
+    setStatus("GPS fix is strong and ready to save.", "success");
+  }
+
+  updateGpsBadge();
+  updateSaveButtonState();
+}
+
+function getLocationErrorMessage(error) {
+  let message = "Location error";
+
+  if (error.code === 1) {
+    message = "Location permission denied. Please allow GPS access in your browser settings.";
+  } else if (error.code === 2) {
+    message = "Location unavailable. Please turn on GPS or move to an area with better signal.";
+  } else if (error.code === 3) {
+    message = "Location request timed out. Please try again outdoors.";
+  }
+
+  return message;
+}
+
+function buildMapUrl(lat, lng) {
+  const latNum = Number(lat);
+  const lngNum = Number(lng);
+  const delta = 0.0025;
+  const left = (lngNum - delta).toFixed(6);
+  const bottom = (latNum - delta).toFixed(6);
+  const right = (lngNum + delta).toFixed(6);
+  const top = (latNum + delta).toFixed(6);
+
+  return "https://www.openstreetmap.org/export/embed.html?bbox=" +
+    encodeURIComponent(left + "," + bottom + "," + right + "," + top) +
+    "&layer=mapnik&marker=" +
+    encodeURIComponent(latNum.toFixed(6) + "," + lngNum.toFixed(6));
+}
+
+async function lookupAddress(lat, lng) {
+  try {
+    const response = await fetch(
+      "https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=" +
+        encodeURIComponent(lat) +
+        "&lon=" +
+        encodeURIComponent(lng),
+      {
+        headers: {
+          Accept: "application/json"
+        }
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error("Address lookup failed");
+    }
+
+    const data = await response.json();
+    currentAddress = data.display_name || "";
+    els.address.innerText = "Address: " + (currentAddress || "Address not found");
+  } catch (error) {
+    currentAddress = "";
+    els.address.innerText = "Address: Unable to fetch address";
+  }
+}
+
+els.imageInput.addEventListener("change", function () {
+  const file = this.files[0];
+
+  if (!file) {
+    imageBase64 = "";
+    originalImageBase64 = "";
+    previewImageBase64 = "";
+    els.preview.style.display = "none";
+    els.preview.removeAttribute("src");
+    els.previewEmptyState.hidden = false;
+    updateCameraButtons();
+    updateSaveButtonState();
+    return;
+  }
+
+  processFileImage(file).catch(() => {
+    imageBase64 = "";
+    originalImageBase64 = "";
+    previewImageBase64 = "";
+    els.preview.style.display = "none";
+    els.preview.removeAttribute("src");
+    els.previewEmptyState.hidden = false;
+    updateCameraButtons();
+    updateSaveButtonState();
+    setStatus("Unable to process the selected image.", "error");
+    alert("Unable to process the selected image.");
+  });
+});
+
+async function startCamera() {
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    const message = "Camera is not supported on this device.";
+    setStatus(message, "error");
+    alert(message);
+    return;
+  }
+
+  try {
+    closeCamera();
+    cameraStream = await navigator.mediaDevices.getUserMedia({
+      video: {
+        facingMode: { ideal: currentFacingMode },
+        width: { ideal: 1080 },
+        height: { ideal: 1920 }
+      },
+      audio: false
+    });
+    els.camera.srcObject = cameraStream;
+    cameraTrack = cameraStream.getVideoTracks()[0] || null;
+    els.camera.style.display = "block";
+    els.cameraShell.hidden = false;
+    els.cameraStatusPill.innerText = currentFacingMode === "user" ? "Front Camera" : "Back Camera";
+    setStatus("Camera ready. Capture a clear photo.", "");
+    updateCameraButtons();
+    els.takePhotoButton.scrollIntoView({ behavior: "smooth", block: "end" });
+  } catch (error) {
+    updateCameraButtons();
+    const message = getCameraErrorMessage(error);
+    els.cameraStatusPill.innerText = "Camera unavailable";
+    setStatus(message, "error");
+    alert(message);
+  }
+}
+
+async function openCamera() {
+  await startCamera();
+}
+
+async function switchCamera() {
+  currentFacingMode = currentFacingMode === "environment" ? "user" : "environment";
+  await startCamera();
+}
+
+async function takePhoto() {
+  if (!cameraStream) {
+    alert("Open the camera first.");
+    return;
+  }
+
+  const canvas = els.snapshotCanvas;
+  canvas.width = els.camera.videoWidth || 640;
+  canvas.height = els.camera.videoHeight || 480;
+
+  const context = canvas.getContext("2d");
+  context.drawImage(els.camera, 0, 0, canvas.width, canvas.height);
+  flashCameraCapture();
+
+  originalImageBase64 = canvas.toDataURL("image/jpeg", 0.7);
+  previewImageBase64 = await stampAndCompressCanvas(canvas);
+  imageBase64 = previewImageBase64;
+  showPreview(previewImageBase64);
+  setStatus("Photo captured and attached.", "success");
+  updateCameraButtons();
+  updateSaveButtonState();
+}
+
+function retakePhoto() {
+  imageBase64 = "";
+  originalImageBase64 = "";
+  previewImageBase64 = "";
+  els.imageInput.value = "";
+  els.preview.style.display = "none";
+  els.preview.removeAttribute("src");
+  els.previewEmptyState.hidden = false;
+  updateCameraButtons();
+  updateSaveButtonState();
+  openCamera();
+}
+
+function closeCamera() {
+  if (cameraStream) {
+    cameraStream.getTracks().forEach((track) => track.stop());
+    cameraStream = null;
+  }
+  cameraTrack = null;
+
+  els.camera.style.display = "none";
+  els.camera.srcObject = null;
+  els.cameraShell.hidden = true;
+  updateCameraButtons();
+}
+
+function showPreview(dataUrl) {
+  els.preview.src = dataUrl;
+  els.preview.style.display = "block";
+  els.previewEmptyState.hidden = true;
+}
+
+async function processFileImage(file) {
+  const dataUrl = await readFileAsDataUrl(file);
+  const image = await loadImage(dataUrl);
+  const canvas = els.snapshotCanvas;
+  const maxWidth = 960;
+  const scale = Math.min(1, maxWidth / image.width);
+
+  canvas.width = Math.round(image.width * scale);
+  canvas.height = Math.round(image.height * scale);
+
+  const context = canvas.getContext("2d");
+  context.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+  originalImageBase64 = canvas.toDataURL("image/jpeg", 0.7);
+  previewImageBase64 = await stampAndCompressCanvas(canvas);
+  imageBase64 = previewImageBase64;
+  showPreview(previewImageBase64);
+  els.cameraStatusPill.innerText = "Photo Ready";
+  setStatus("Photo attached from file upload.", "success");
+  updateCameraButtons();
+  updateSaveButtonState();
+}
+
+function readFileAsDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result || "");
+    reader.onerror = () => reject(new Error("Failed to read image"));
+    reader.readAsDataURL(file);
+  });
+}
+
+function loadImage(src) {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error("Failed to load image"));
+    image.src = src;
+  });
+}
+
+async function stampAndCompressCanvas(sourceCanvas) {
+  const outputCanvas = document.createElement("canvas");
+  outputCanvas.width = sourceCanvas.width;
+  outputCanvas.height = sourceCanvas.height;
+
+  const context = outputCanvas.getContext("2d");
+  context.drawImage(sourceCanvas, 0, 0);
+
+  const stampLines = [
+    "Time: " + new Date().toLocaleString(),
+    "Lat: " + (latitude !== null ? latitude.toFixed(6) : "--"),
+    "Lng: " + (longitude !== null ? longitude.toFixed(6) : "--"),
+    "Acc: " + (locationAccuracy !== null ? Math.round(locationAccuracy) + "m" : "--")
+  ];
+
+  const fontSize = Math.max(18, Math.round(outputCanvas.width * 0.032));
+  const lineHeight = fontSize + 8;
+  const padding = 18;
+
+  context.fillStyle = "#ffffff";
+  context.font = "600 " + fontSize + "px Arial";
+  context.textBaseline = "top";
+  context.lineWidth = Math.max(2, Math.round(fontSize * 0.16));
+  context.strokeStyle = "#000000";
+  context.lineJoin = "round";
+
+  stampLines.forEach((line, index) => {
+    const x = padding;
+    const y = padding + (index * lineHeight);
+    context.strokeText(line, x, y);
+    context.fillText(line, x, y);
+  });
+
+  return outputCanvas.toDataURL("image/jpeg", 0.55);
+}
+
+function validateFarmerName(value) {
+  return /^[A-Za-z][A-Za-z .,'-]{1,79}$/.test(value);
+}
+
+function normalizeFarmerName(value) {
+  return String(value || "").trim().replace(/\s+/g, " ").toLowerCase();
+}
+
+function getTodayKey() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return year + "-" + month + "-" + day;
+}
+
+function readAttendanceHistory() {
+  try {
+    const raw = window.localStorage.getItem(ATTENDANCE_HISTORY_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (error) {
+    return [];
+  }
+}
+
+function writeAttendanceHistory(entries) {
+  try {
+    window.localStorage.setItem(ATTENDANCE_HISTORY_KEY, JSON.stringify(entries));
+  } catch (error) {
+    console.warn("Unable to store attendance history locally.", error);
+  }
+}
+
+function recordSuccessfulAttendance(entry) {
+  const existingEntries = readAttendanceHistory().filter(Boolean);
+
+  existingEntries.unshift({
+    username: entry.username || "",
+    extensionWorkerName: entry.extensionWorkerName || "",
+    farmerName: entry.farmerName || "",
+    farmerType: entry.farmerType || "",
+    status: entry.status || "",
+    photoDataUrl: entry.photoDataUrl || "",
+    latitude: entry.latitude || "",
+    longitude: entry.longitude || "",
+    identityKey: entry.identityKey,
+    dateKey: entry.dateKey || getTodayKey(),
+    savedAt: entry.savedAt
+  });
+
+  writeAttendanceHistory(existingEntries.slice(0, 200));
+}
+
+function getActivityEntriesForCurrentUser() {
+  const session = readSession();
+  if (!session || !session.username) {
+    return [];
+  }
+
+  const username = String(session.username).trim().toLowerCase();
+  return readAttendanceHistory().filter((entry) =>
+    entry &&
+    String(entry.username || "").trim().toLowerCase() === username
+  );
+}
+
+function normalizeSharedReportEntry(rawEntry) {
+  if (!rawEntry) {
+    return null;
+  }
+
+  const savedAt = String(
+    rawEntry.timestamp ||
+    rawEntry.savedAt ||
+    rawEntry.dateTime ||
+    rawEntry.datetime ||
+    ""
+  ).trim();
+  const farmerName = String(rawEntry.farmerName || rawEntry.nameOfFarmer || rawEntry.name || "").trim();
+  const farmerType = String(rawEntry.farmerType || rawEntry.type || "").trim();
+  const extensionWorkerName = String(rawEntry.extensionWorkerName || rawEntry.extensionWorker || rawEntry.worker || "").trim();
+  const username = String(rawEntry.username || rawEntry.user || "").trim();
+  const latitude = String(rawEntry.latitude || rawEntry.lat || "").trim();
+  const longitude = String(rawEntry.longitude || rawEntry.lng || "").trim();
+  const photoDataUrl = String(
+    rawEntry.photoDataUrl ||
+    rawEntry.originalPhotoLink ||
+    rawEntry.photoLink ||
+    rawEntry.photo ||
+    ""
+  ).trim();
+  const status = String(rawEntry.status || "").trim();
+  const dateKey = savedAt && savedAt.length >= 10 ? savedAt.slice(0, 10) : "";
+
+  if (!farmerName) {
+    return null;
+  }
+
+  return {
+    username: username,
+    extensionWorkerName: extensionWorkerName,
+    farmerName: farmerName,
+    farmerType: farmerType,
+    status: status,
+    photoDataUrl: photoDataUrl,
+    latitude: latitude,
+    longitude: longitude,
+    dateKey: dateKey,
+    savedAt: savedAt
+  };
+}
+
+async function fetchSharedReportEntries(forceRefresh) {
+  const session = readSession();
+  const signedIn = Boolean(session && session.username && session.extensionWorkerName && !session.mustChangePassword);
+
+  if (!signedIn) {
+    sharedReportEntriesCache = [];
+    sharedReportEntriesLoadedFor = "";
+    return [];
+  }
+
+  const cacheKey = String(session.username || "").trim().toLowerCase();
+  if (!forceRefresh && sharedReportEntriesLoadedFor === cacheKey && sharedReportEntriesCache.length >= 0) {
+    return sharedReportEntriesCache.slice();
+  }
+
+  const response = await fetch(APPS_SCRIPT_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "text/plain;charset=utf-8"
+    },
+    body: JSON.stringify({
+      action: "getReports",
+      username: session.username,
+      extensionWorkerName: session.extensionWorkerName
+    })
+  });
+
+  const responseText = await response.text();
+  let responseJson = null;
+
+  try {
+    responseJson = responseText ? JSON.parse(responseText) : null;
+  } catch (error) {
+    responseJson = null;
+  }
+
+  if (!response.ok || (responseJson && responseJson.success === false)) {
+    throw new Error((responseJson && responseJson.message) || "Unable to load Google Sheet report data.");
+  }
+
+  const rawEntries = Array.isArray(responseJson)
+    ? responseJson
+    : (responseJson && (responseJson.records || responseJson.rows || responseJson.data)) || [];
+
+  sharedReportEntriesCache = rawEntries
+    .map(normalizeSharedReportEntry)
+    .filter(Boolean)
+    .filter((entry) =>
+      String(entry.extensionWorkerName || "").trim().toLowerCase() === String(session.extensionWorkerName || "").trim().toLowerCase()
+    )
+    .sort((a, b) => new Date(a.savedAt || 0).getTime() - new Date(b.savedAt || 0).getTime());
+  sharedReportEntriesLoadedFor = cacheKey;
+  return sharedReportEntriesCache.slice();
+}
+
+async function getReportEntriesForCurrentUser(forceRefresh) {
+  try {
+    return await fetchSharedReportEntries(forceRefresh);
+  } catch (error) {
+    console.warn("Unable to load shared report data from Google Sheet.", error);
+    return getActivityEntriesForCurrentUser()
+      .slice()
+      .sort((a, b) => new Date(a.savedAt || 0).getTime() - new Date(b.savedAt || 0).getTime());
+  }
+}
+
+function getWeekKey(date) {
+  const current = new Date(date);
+  current.setHours(0, 0, 0, 0);
+  const day = current.getDay();
+  const diff = (day + 6) % 7;
+  current.setDate(current.getDate() - diff);
+  const year = current.getFullYear();
+  const month = String(current.getMonth() + 1).padStart(2, "0");
+  const dayOfMonth = String(current.getDate()).padStart(2, "0");
+  return year + "-" + month + "-" + dayOfMonth;
+}
+
+async function renderSummary(forceRefresh) {
+  const session = readSession();
+  const signedIn = Boolean(session && session.username && session.extensionWorkerName && !session.mustChangePassword);
+  const entries = signedIn ? await getReportEntriesForCurrentUser(forceRefresh) : [];
+  const todayKey = getTodayKey();
+  const weekKey = getWeekKey(new Date());
+  const dailyUnique = new Set();
+  const weeklyUnique = new Set();
+
+  entries.forEach((entry) => {
+    const farmerKey = String(entry.farmerName || "").trim().toLowerCase();
+    const savedDate = entry.savedAt ? new Date(entry.savedAt) : new Date();
+    if (!farmerKey) {
+      return;
+    }
+    if ((entry.dateKey || "") === todayKey) {
+      dailyUnique.add(farmerKey);
+    }
+    if (getWeekKey(savedDate) === weekKey) {
+      weeklyUnique.add(farmerKey);
+    }
+  });
+
+  els.dailySummaryValue.innerText = String(dailyUnique.size);
+  els.weeklySummaryValue.innerText = String(weeklyUnique.size);
+  els.summaryTableWrap.innerHTML = "";
+  els.summaryEmpty.hidden = entries.length > 0;
+
+  if (!signedIn || entries.length === 0) {
+    return;
+  }
+
+  const grouped = new Map();
+  entries.forEach((entry) => {
+    const dateKey = entry.dateKey || (entry.savedAt ? entry.savedAt.slice(0, 10) : "");
+    const farmerKey = String(entry.farmerName || "").trim().toLowerCase();
+    if (!dateKey || !farmerKey) {
+      return;
+    }
+    if (!grouped.has(dateKey)) {
+      grouped.set(dateKey, new Set());
+    }
+    grouped.get(dateKey).add(farmerKey);
+  });
+
+  const rows = Array.from(grouped.entries())
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .slice(-7)
+    .map(([dateKey, farmers], index) =>
+      "<tr>" +
+        "<td>" + (index + 1) + "</td>" +
+        "<td>" + dateKey + "</td>" +
+        "<td>" + farmers.size + "</td>" +
+      "</tr>"
+    );
+
+  els.summaryTableWrap.innerHTML =
+    "<table class=\"summary-table\">" +
+      "<thead><tr><th>No.</th><th>Date</th><th>Farmers Monitored</th></tr></thead>" +
+      "<tbody>" + rows.join("") + "</tbody>" +
+    "</table>";
+}
+
+async function renderActivity(forceRefresh) {
+  const session = readSession();
+  const signedIn = Boolean(session && session.username && session.extensionWorkerName && !session.mustChangePassword);
+  const entries = signedIn
+    ? (await getReportEntriesForCurrentUser(forceRefresh)).slice(0, 8)
+    : [];
+
+  els.activityList.innerHTML = "";
+  els.activityEmpty.hidden = entries.length > 0;
+
+  if (!signedIn || entries.length === 0) {
+    return;
+  }
+
+  const rows = entries.map((entry, index) => {
+    const when = entry.savedAt ? new Date(entry.savedAt).toLocaleString() : "Unknown time";
+    const farmerType = entry.farmerType || "Unknown type";
+    const farmerName = entry.farmerName || "Unknown farmer";
+    const photoMarkup = entry.photoDataUrl
+      ? "<a class=\"report-thumb-link\" href=\"" + entry.photoDataUrl + "\" target=\"_blank\" rel=\"noopener noreferrer\" aria-label=\"Open saved photo for " + farmerName + "\"><img class=\"report-thumb\" src=\"" + entry.photoDataUrl + "\" alt=\"Saved photo for " + farmerName + "\"></a>"
+      : "No photo";
+    const hasMapPin = entry.latitude && entry.longitude && entry.latitude !== "No GPS" && entry.longitude !== "No GPS";
+    const mapMarkup = hasMapPin
+      ? "<a href=\"https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(entry.latitude + "," + entry.longitude) + "\" target=\"_blank\" rel=\"noopener noreferrer\">Open Pin</a>"
+      : "No GPS";
+
+    return (
+      "<tr>" +
+        "<td>" + (index + 1) + "</td>" +
+        "<td>" + farmerName + "</td>" +
+        "<td>" + farmerType + "</td>" +
+        "<td>" + photoMarkup + "</td>" +
+        "<td>" + mapMarkup + "</td>" +
+        "<td>" + when + "</td>" +
+      "</tr>"
+    );
+  });
+
+  els.activityList.innerHTML =
+    "<div class=\"report-table-wrap\">" +
+      "<table class=\"report-table\">" +
+        "<thead>" +
+          "<tr>" +
+            "<th>No.</th>" +
+            "<th>Farmer</th>" +
+            "<th>Type</th>" +
+            "<th>Photo</th>" +
+            "<th>Map</th>" +
+            "<th>Saved</th>" +
+          "</tr>" +
+        "</thead>" +
+        "<tbody>" + rows.join("") + "</tbody>" +
+      "</table>" +
+    "</div>";
+}
+
+function hasDuplicateAttendanceToday(farmerName, farmerType, extensionWorkerName) {
+  const todayKey = getTodayKey();
+  const identityKey = getRecordIdentity(farmerName, farmerType, extensionWorkerName);
+
+  return readAttendanceHistory().some((entry) =>
+    entry &&
+    entry.dateKey === todayKey &&
+    identityKey &&
+    entry.identityKey === identityKey
+  );
+}
+
+async function postAttendancePayload(payload) {
+  const response = await fetch(APPS_SCRIPT_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "text/plain;charset=utf-8"
+    },
+    body: JSON.stringify(payload)
+  });
+
+  const responseText = await response.text();
+  const trimmedResponse = responseText.trim();
+  let responseJson = null;
+
+  if (!response.ok) {
+    throw new Error("Save request failed (" + response.status + ")");
+  }
+
+  try {
+    responseJson = trimmedResponse ? JSON.parse(trimmedResponse) : null;
+  } catch (error) {
+    responseJson = null;
+  }
+
+  if (responseJson && (responseJson.success === false || responseJson.status === "error" || responseJson.status === "failed")) {
+    throw new Error(responseJson.message || "Server rejected save");
+  }
+
+  if (trimmedResponse && /^(error|failed|invalid)\b/i.test(trimmedResponse)) {
+    throw new Error(trimmedResponse);
+  }
+}
+
+function isLikelyConnectivityIssue(message) {
+  return message === "Failed to fetch" || /network|internet|fetch|timeout|load failed/i.test(message);
+}
+
+async function syncPendingUploads() {
+  const pendingUploads = readPendingUploads();
+
+  if (pendingUploads.length === 0) {
+    setStatus("No pending records to sync.", "success");
+    updateSaveButtonState();
+    return;
+  }
+
+  if (isSaving) {
+    return;
+  }
+
+  isSaving = true;
+  updateSaveButtonState();
+  setStatus("Syncing pending records...", "");
+
+  const remaining = [];
+  let syncedCount = 0;
+
+  try {
+    for (const record of pendingUploads) {
+      try {
+        await postAttendancePayload(record.payload);
+        syncedCount += 1;
+      } catch (error) {
+        remaining.push(record);
+      }
+    }
+
+    writePendingUploads(remaining);
+    updatePendingUploadsUi();
+    if (syncedCount > 0) {
+      sharedReportEntriesLoadedFor = "";
+    }
+
+    if (remaining.length === 0) {
+      setStatus("All pending records synced successfully.", "success");
+    } else if (syncedCount > 0) {
+      setStatus("Some records synced. " + remaining.length + " still pending.", "warning");
+    } else {
+      setStatus("Unable to sync pending records right now.", "error");
+    }
+  } finally {
+    isSaving = false;
+    updateSaveButtonState();
+    updateNetworkBadge();
+    if (syncedCount > 0) {
+      renderActivity(true).catch(() => {});
+      renderSummary(true).catch(() => {});
+    }
+  }
+}
+
+function saveWithoutGps() {
+  if (latitude !== null && longitude !== null) {
+    setStatus("GPS is already available. You can use Save Record.", "success");
+    return;
+  }
+
+  setStatus("Saving without GPS. The record will be marked as No GPS.", "warning");
+  saveData().catch(() => {
+    setStatus("Unexpected error while saving.", "error");
+    alert("Unexpected error while saving.");
+  });
+}
+
+function autoSyncPendingUploads() {
+  if (!navigator.onLine || isSaving || readPendingUploads().length === 0) {
+    updateNetworkBadge();
+    return;
+  }
+
+  setStatus("Internet restored. Syncing pending records...", "");
+  syncPendingUploads().catch(() => {
+    setStatus("Automatic sync failed. You can retry from the button.", "warning");
+  });
+}
+
+async function saveData() {
+  const session = readSession();
+  const farmerName = els.farmerName.value.trim();
+  const farmerType = els.farmerType.value;
+  const extensionWorkerName = (session && session.extensionWorkerName) || els.extensionWorkerName.value;
+  const hasGps = latitude !== null && longitude !== null;
+  const recordStatus = hasGps ? "With GPS" : "No GPS";
+  const latitudeValue = hasGps ? String(latitude) : "No GPS";
+  const longitudeValue = hasGps ? String(longitude) : "No GPS";
+  const addressValue = hasGps ? (currentAddress || "Address not available") : "No GPS";
+  const accuracyValue = locationAccuracy !== null ? Math.round(locationAccuracy) + " meters" : "No GPS";
+
+  if (!session || !session.extensionWorkerName) {
+    alert("Sign in first.");
+    applySession(null);
+    return;
+  }
+
+  if (!farmerName) {
+    alert("Enter farmer name first.");
+    els.farmerName.focus();
+    return;
+  }
+
+  if (!validateFarmerName(farmerName)) {
+    alert("Enter a valid farmer name.");
+    els.farmerName.focus();
+    return;
+  }
+
+  if (!extensionWorkerName) {
+    alert("Select an extension worker name first.");
+    els.extensionWorkerName.focus();
+    return;
+  }
+
+  if (!originalImageBase64 && !imageBase64) {
+    alert("Capture or upload a photo before saving.");
+    return;
+  }
+
+  if (hasDuplicateAttendanceToday(farmerName, farmerType, extensionWorkerName)) {
+    const duplicateMessage = "A record was already saved today for this farmer, type, and extension worker.";
+    setStatus(duplicateMessage, "warning");
+    alert(duplicateMessage);
+    return;
+  }
+
+  if (isSaving) {
+    return;
+  }
+
+  isSaving = true;
+  updateSaveButtonState();
+  setStatus("Saving Record...", "");
+  els.summary.style.display = "none";
+  els.summary.innerHTML = "";
+
+  const sourcePhoto = originalImageBase64 || previewImageBase64 || imageBase64;
+  if (!sourcePhoto) {
+    isSaving = false;
+    updateSaveButtonState();
+    alert("Capture or upload a photo before saving.");
+    return;
+  }
+
+  const stampedPhoto = await createStampedPhotoDataUrl(sourcePhoto);
+
+  const payload = {
+      timestamp: new Date().toISOString(),
+      farmerName: farmerName,
+      farmerType: farmerType,
+      extensionWorkerName: extensionWorkerName,
+      latitude: latitudeValue,
+      longitude: longitudeValue,
+      address: addressValue,
+      photoLink: stampedPhoto,
+      originalPhotoLink: originalImageBase64 || sourcePhoto,
+      deviceInfo: navigator.userAgent,
+      status: recordStatus
+    };
+
+  try {
+    await postAttendancePayload(payload);
+
+    const savedAt = new Date().toLocaleString();
+    recordSuccessfulAttendance({
+      username: session.username || "",
+      extensionWorkerName: extensionWorkerName,
+      farmerName: farmerName,
+      farmerType: farmerType,
+      status: recordStatus,
+      photoDataUrl: stampedPhoto,
+      latitude: latitudeValue,
+      longitude: longitudeValue,
+      identityKey: getRecordIdentity(farmerName, farmerType, extensionWorkerName),
+      savedAt: new Date().toISOString()
+    });
+
+    setStatus("Saved successfully.", "success");
+    els.summary.innerHTML =
+      "<strong>Saved Record</strong><br>" +
+      "Farmer: " + farmerName + "<br>" +
+      "Type: " + farmerType + "<br>" +
+      "Extension Worker: " + extensionWorkerName + "<br>" +
+      "Status: " + recordStatus + "<br>" +
+      "Time: " + savedAt + "<br>" +
+      "Latitude: " + latitudeValue + "<br>" +
+      "Longitude: " + longitudeValue + "<br>" +
+      "Accuracy: " + accuracyValue + "<br>" +
+      "Address: " + addressValue;
+    els.summary.style.display = "block";
+    resetForm();
+    sharedReportEntriesLoadedFor = "";
+    renderActivity(true).catch(() => {});
+    renderSummary(true).catch(() => {});
+  } catch (error) {
+    const errorMessage = error && error.message ? error.message : "Error saving data";
+    if (isLikelyConnectivityIssue(errorMessage)) {
+      const storedOffline = queuePendingUpload({
+        payload: payload,
+        queuedAt: new Date().toISOString()
+      });
+      if (storedOffline) {
+        recordSuccessfulAttendance({
+          username: session.username || "",
+          extensionWorkerName: extensionWorkerName,
+          farmerName: farmerName,
+          farmerType: farmerType,
+          status: recordStatus,
+          photoDataUrl: stampedPhoto,
+          latitude: latitudeValue,
+          longitude: longitudeValue,
+          identityKey: getRecordIdentity(farmerName, farmerType, extensionWorkerName),
+          savedAt: payload.timestamp
+        });
+        setStatus("Signal is weak. Record saved offline and queued for sync.", "warning");
+        els.summary.innerHTML =
+          "<strong>Saved Offline</strong><br>" +
+          "Farmer: " + farmerName + "<br>" +
+          "Type: " + farmerType + "<br>" +
+          "Extension Worker: " + extensionWorkerName + "<br>" +
+          "Status: " + recordStatus + "<br>" +
+          "Location: " + (hasGps ? "Captured" : "No GPS") + "<br>" +
+          "Queued: " + new Date().toLocaleString() + "<br>" +
+          "Pending uploads: " + readPendingUploads().length;
+        els.summary.style.display = "block";
+        resetForm();
+        renderActivity().catch(() => {});
+        renderSummary().catch(() => {});
+      } else {
+        const storageMessage = "Offline save failed because this device could not store the pending record locally.";
+        setStatus(storageMessage, "error");
+        alert(storageMessage);
+      }
+    } else {
+      const friendlyMessage = errorMessage === "Failed to fetch"
+        ? "Unable to reach the server. Check your internet connection and Apps Script deployment access, then try again."
+        : errorMessage;
+      setStatus(friendlyMessage, "error");
+      alert(friendlyMessage);
+    }
+  } finally {
+    isSaving = false;
+    updateSaveButtonState();
+  }
+}
+
+function resetForm() {
+  const selectedExtensionWorkerName = els.extensionWorkerName.value;
+  els.farmerName.value = "";
+  els.farmerType.value = "TCGS";
+  els.extensionWorkerName.value = selectedExtensionWorkerName;
+  els.imageInput.value = "";
+  els.preview.style.display = "none";
+  els.preview.removeAttribute("src");
+  els.previewEmptyState.hidden = false;
+  imageBase64 = "";
+  originalImageBase64 = "";
+  previewImageBase64 = "";
+  clearLocationState();
+  els.location.innerText = "Location not fetched";
+  closeCamera();
+  updateCameraButtons();
+  updateSaveButtonState();
+}
+
+async function createStampedPhotoDataUrl(sourceDataUrl) {
+  const image = await loadImage(sourceDataUrl);
+  const canvas = document.createElement("canvas");
+  canvas.width = image.width;
+  canvas.height = image.height;
+
+  const context = canvas.getContext("2d");
+  context.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+  return stampAndCompressCanvas(canvas);
+}
+
+els.getLocationButton.addEventListener("click", getLocation);
+els.retryLocationButton.addEventListener("click", getLocation);
+els.loginButton.addEventListener("click", () => {
+  login().catch(() => {
+    setLoginStatus("Unexpected error while signing in.", "error");
+  });
+});
+els.menuButton.addEventListener("click", () => {
+  if (els.sideNav.classList.contains("open")) {
+    closeSidebar();
+  } else {
+    closeSettingsDrawer();
+    openSidebar();
+  }
+});
+els.sidebarOverlay.addEventListener("click", closeSidebar);
+els.settingsButton.addEventListener("click", () => {
+  if (els.settingsDrawer.classList.contains("open")) {
+    closeSettingsDrawer();
+  } else {
+    closeSidebar();
+    openSettingsDrawer();
+  }
+});
+els.settingsOverlay.addEventListener("click", closeSettingsDrawer);
+els.settingsCloseButton.addEventListener("click", closeSettingsDrawer);
+els.settingsItemSettings.addEventListener("click", () => setActiveSettingsItem(els.settingsItemSettings));
+els.settingsItemAccount.addEventListener("click", () => setActiveSettingsItem(els.settingsItemAccount));
+els.settingsItemHelp.addEventListener("click", () => setActiveSettingsItem(els.settingsItemHelp));
+els.drawerLogoutButton.addEventListener("click", () => {
+  closeSettingsDrawer();
+  logout();
+});
+els.sideNavList.addEventListener("touchstart", (event) => {
+  const touch = event.touches && event.touches[0];
+  if (!touch) {
+    return;
+  }
+  rememberSidebarTouchPoint(touch.clientX, touch.clientY);
+}, { passive: true });
+
+els.sideNavList.addEventListener("click", (event) => {
+  const recentTouchPoint = lastSidebarTouchPoint && (Date.now() - lastSidebarTouchPoint.timestamp) < 1200
+    ? lastSidebarTouchPoint
+    : null;
+  const clientX = recentTouchPoint ? recentTouchPoint.x : event.clientX;
+  const clientY = recentTouchPoint ? recentTouchPoint.y : event.clientY;
+  const matchedButton = getSidebarViewButtonFromPoint(clientX, clientY)
+    || event.target.closest("button[data-view]");
+
+  if (!matchedButton) {
+    setDebugNav("Sidebar tap did not match a nav button.");
+    return;
+  }
+
+  const viewName = matchedButton.dataset.view || "record";
+  const label = matchedButton === els.summaryTabButton
+    ? "Home"
+    : (matchedButton === els.activityTabButton ? "Reports" : "New Record");
+
+  setDebugNav(label + " click @ " + Math.round(clientX) + "," + Math.round(clientY));
+  showMainView(viewName);
+});
+els.passwordInput.addEventListener("keydown", (event) => {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    login().catch(() => {
+      setLoginStatus("Unexpected error while signing in.", "error");
+    });
+  }
+});
+els.changePasswordButton.addEventListener("click", () => {
+  changePassword().catch(() => {
+    setChangePasswordStatus("Unexpected error while updating password.", "error");
+  });
+});
+els.confirmPasswordInput.addEventListener("keydown", (event) => {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    changePassword().catch(() => {
+      setChangePasswordStatus("Unexpected error while updating password.", "error");
+    });
+  }
+});
+els.openCameraButton.addEventListener("click", openCamera);
+els.switchCameraButton.addEventListener("click", switchCamera);
+els.takePhotoButton.addEventListener("click", () => {
+  takePhoto().catch(() => {
+    setStatus("Unable to capture photo.", "error");
+    alert("Unable to capture photo.");
+  });
+});
+els.retakePhotoButton.addEventListener("click", retakePhoto);
+els.closeCameraButton.addEventListener("click", closeCamera);
+els.saveButton.addEventListener("click", () => {
+  saveData().catch(() => {
+    setStatus("Unexpected error while saving.", "error");
+    alert("Unexpected error while saving.");
+  });
+});
+els.saveWithoutGpsButton.addEventListener("click", saveWithoutGps);
+els.newRecordButton.addEventListener("click", () => {
+  resetForm();
+  setStatus("Ready for a new record.", "success");
+  els.summary.style.display = "none";
+  els.summary.innerHTML = "";
+  renderActivity().catch(() => {});
+  renderSummary().catch(() => {});
+  els.farmerName.focus();
+});
+els.syncPendingButton.addEventListener("click", () => {
+  syncPendingUploads().catch(() => {
+    setStatus("Unexpected error while syncing pending records.", "error");
+    alert("Unexpected error while syncing pending records.");
+  });
+});
+els.farmerName.addEventListener("input", updateSaveButtonState);
+els.farmerType.addEventListener("change", updateSaveButtonState);
+els.extensionWorkerName.addEventListener("change", updateSaveButtonState);
+
+updateCameraButtons();
+updatePendingUploadsUi();
+updateNetworkBadge();
+updateGpsBadge();
+promoteOverlayElements();
+syncAppShellBounds();
+closeSidebar();
+closeSettingsDrawer();
+applySession(readSession());
+if (!readSession()) {
+  setStatus("Sign in to continue.", "");
+}
+showMainView("record");
+updateSaveButtonState();
+renderActivity().catch(() => {});
+renderSummary().catch(() => {});
+updateAppModeBadge();
+window.addEventListener("beforeunload", closeCamera);
+window.addEventListener("online", autoSyncPendingUploads);
+window.addEventListener("offline", updateNetworkBadge);
+window.addEventListener("resize", syncAppShellBounds);
+window.addEventListener("scroll", syncAppShellBounds, { passive: true });
+window.matchMedia("(display-mode: standalone)").addEventListener("change", () => {
+  updateAppModeBadge();
+  updateInstallButtonVisibility();
+});
+
+if (!isAndroidAppContainer()) {
+  window.addEventListener("beforeinstallprompt", (event) => {
+    event.preventDefault();
+    deferredInstallPrompt = event;
+    updateInstallButtonVisibility();
+    setStatus("This app is ready to install on your device.", "success");
+  });
+
+  window.addEventListener("appinstalled", () => {
+    deferredInstallPrompt = null;
+    updateAppModeBadge();
+    updateInstallButtonVisibility();
+    setStatus("App installed successfully.", "success");
+  });
+}
+
+els.installAppButton.addEventListener("click", async () => {
+  if (!deferredInstallPrompt) {
+    setStatus("Install is not available on this device yet.", "warning");
+    return;
+  }
+
+  deferredInstallPrompt.prompt();
+  const choice = await deferredInstallPrompt.userChoice;
+  deferredInstallPrompt = null;
+  updateInstallButtonVisibility();
+
+  if (choice && choice.outcome === "accepted") {
+    setStatus("Installing app...", "success");
+  } else {
+    setStatus("App install dismissed.", "warning");
+  }
+});
+
+if (!isAndroidAppContainer() && "serviceWorker" in navigator) {
+  window.addEventListener("load", function () {
+    navigator.serviceWorker.register("./sw.js").catch(function (error) {
+      console.error("Service worker registration failed:", error);
+    });
+  });
+}
+
+window.addEventListener("load", autoSyncPendingUploads);
+</script>
+
+</body>
+</html>
