@@ -1321,6 +1321,9 @@ button:disabled {
       <div id="networkBadge" class="status-pill neutral">Checking Network...</div>
       <div id="gpsBadge" class="status-pill neutral">GPS Not Captured</div>
     </div>
+	<div id="reportsView">
+  <h2>Reports Page</h2>
+</div>
     <div class="camera-controls">
       <button id="getLocationButton" type="button">Get GPS</button>
       <button id="retryLocationButton" class="secondary-button" type="button">Retry GPS</button>
@@ -1535,10 +1538,12 @@ const els = {
   recordTabButton: document.getElementById("recordTabButton"),
   activityTabButton: document.getElementById("activityTabButton"),
   summaryTabButton: document.getElementById("summaryTabButton"),
+  reportsTabButton: document.getElementById(reportsTabButton"),
   sideNavList: document.getElementById("sideNavList"),
   recordView: document.getElementById("recordView"),
   activityView: document.getElementById("activityView"),
   summaryView: document.getElementById("summaryView"),
+  reportsView: document.getElementById("reportsView"),
   farmerName: document.getElementById("farmerName"),
   farmerType: document.getElementById("farmerType"),
   extensionWorkerName: document.getElementById("extensionWorkerName"),
