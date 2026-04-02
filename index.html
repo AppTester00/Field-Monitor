@@ -3322,7 +3322,7 @@ applySession(readSession());
 if (!readSession()) {
   setStatus("Sign in to continue.", "");
 }
-showMainView("record");
+showMainView("summary");
 updateSaveButtonState();
 renderActivity().catch(() => {});
 renderSummary().catch(() => {});
@@ -3373,7 +3373,9 @@ els.installAppButton.addEventListener("click", async () => {
 
 if (!isAndroidAppContainer() && "serviceWorker" in navigator) {
   window.addEventListener("load", function () {
-    navigator.serviceWorker.register("./sw.js").catch(function (error) {
+   if (location.protocol === "http:" || location.protocol === "https:") {
+  navigator.serviceWorker.register("./sw.js");
+} {
       console.error("Service worker registration failed:", error);
     });
   });
