@@ -1582,9 +1582,17 @@ els.recordTabButton.onclick = function (e) {
   showMainView("record");
 };
 
-els.activityTabButton.onclick = function (e) {
-  e.stopPropagation();
+els.summaryTabButton.onclick = function () {
+  showMainView("summary");
+};
+
+els.recordTabButton.onclick = function () {
+  showMainView("record");
+};
+
+els.activityTabButton.onclick = function () {
   showMainView("activity");
+};
 };
 function promoteOverlayElements() {
   [els.sidebarOverlay, els.sideNav, els.settingsOverlay, els.settingsDrawer].forEach((element) => {
@@ -1743,7 +1751,7 @@ console.log("VIEW:", viewName);
     animateViewPanel(els.recordView);
   }
 
-  closeSidebar();
+//  closeSidebar();
 }
 
 window.showMainView = showMainView;
@@ -3333,6 +3341,15 @@ if (!isAndroidAppContainer() && "serviceWorker" in navigator) {
   });
 }
 window.addEventListener("load", autoSyncPendingUploads);
+
+// ✅ ADD THIS HERE
+document.querySelectorAll("[data-view]").forEach(btn => {
+  btn.addEventListener("click", function () {
+    const view = this.getAttribute("data-view");
+    console.log("CLICKED:", view);
+    showMainView(view);
+  });
+});
 </script>
 
 </body>
