@@ -1661,16 +1661,25 @@ function syncDrawerMode() {
 function closeSidebar() {
   els.sideNav.classList.remove("open");
   els.sidebarOverlay.classList.remove("open");
-  els.sideNav.removeAttribute("aria-hidden");
+
+  // 🔥 FORCE REMOVE BLOCKING
+  els.sidebarOverlay.style.pointerEvents = "none";
+
   els.sideNav.style.display = "none";
+
   syncDrawerMode();
   pushDebugNav("Sidebar closed");
+}
 }
 
 function openSidebar() {
   els.sideNav.style.display = "flex";
   els.sideNav.classList.add("open");
   els.sidebarOverlay.classList.add("open");
+
+  // 🔥 ALLOW interaction ONLY when open
+  els.sidebarOverlay.style.pointerEvents = "auto";
+
   syncDrawerMode();
   setDebugNav("Sidebar opened. Tap Home, New Record, or Reports.");
 }
