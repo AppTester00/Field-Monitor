@@ -3275,8 +3275,8 @@ if (!readSession()) {
 }
 showMainView("summary");
 updateSaveButtonState();
-renderActivity().catch(() => {});
-renderSummary().catch(() => {});
+//renderActivity().catch(() => {});
+//renderSummary().catch(() => {});
 updateAppModeBadge();
 window.addEventListener("beforeunload", closeCamera);
 window.addEventListener("online", autoSyncPendingUploads);
