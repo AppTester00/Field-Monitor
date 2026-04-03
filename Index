@@ -1571,29 +1571,8 @@ const els = {
   cameraControls: document.getElementById("photoCameraControls"),
   debugNavStatus: document.getElementById("debugNavStatus")
 };
-// ✅ FIX NAV BUTTONS (CORRECT PLACE)
-els.summaryTabButton.onclick = function (e) {
-  e.stopPropagation();
-  showMainView("summary");
-};
 
-els.recordTabButton.onclick = function (e) {
-  e.stopPropagation();
-  showMainView("record");
-};
 
-els.summaryTabButton.onclick = function () {
-  showMainView("summary");
-};
-
-els.recordTabButton.onclick = function () {
-  showMainView("record");
-};
-
-els.activityTabButton.onclick = function () {
-  showMainView("activity");
-};
-};
 function promoteOverlayElements() {
   [els.sidebarOverlay, els.sideNav, els.settingsOverlay, els.settingsDrawer].forEach((element) => {
     if (element && element.parentElement !== document.body) {
@@ -3342,12 +3321,14 @@ if (!isAndroidAppContainer() && "serviceWorker" in navigator) {
 }
 window.addEventListener("load", autoSyncPendingUploads);
 
-// ✅ ADD THIS HERE
-document.querySelectorAll("[data-view]").forEach(btn => {
+document.querySelectorAll("#sideNav button").forEach(btn => {
   btn.addEventListener("click", function () {
     const view = this.getAttribute("data-view");
     console.log("CLICKED:", view);
-    showMainView(view);
+
+    if (view) {
+      showMainView(view);
+    }
   });
 });
 </script>
