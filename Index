@@ -2695,7 +2695,7 @@ async function fetchSharedReportEntries(forceRefresh) {
 
   return sharedReportEntriesCache;
 }
-}
+ 
 async function getReportEntriesForCurrentUser(forceRefresh) {
   try {
     return await fetchSharedReportEntries(forceRefresh);
