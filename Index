@@ -1315,7 +1315,7 @@ button:disabled {
 
   <div id="appContent" hidden>
   <div id="recordView" class="view-panel">
-    <div id="reportsView"></div>
+  
   <div class="section-card">
     <p class="section-title">Location</p>
     <div id="statusBar" class="status-bar">
@@ -1719,7 +1719,7 @@ function getInitials(name) {
 
 function showMainView(viewName) {
   pushDebugNav('showMainView("' + viewName + '")');
-
+console.log("VIEW:", viewName);
   const showActivity = viewName === "activity";
   const showSummary = viewName === "summary";
 
