@@ -1661,7 +1661,7 @@ function syncDrawerMode() {
 function closeSidebar() {
   els.sideNav.classList.remove("open");
   els.sidebarOverlay.classList.remove("open");
-  els.sideNav.setAttribute("aria-hidden", "true");
+  els.sideNav.removeAttribute("aria-hidden");
   els.sideNav.style.display = "none";
   syncDrawerMode();
   pushDebugNav("Sidebar closed");
@@ -1671,7 +1671,6 @@ function openSidebar() {
   els.sideNav.style.display = "flex";
   els.sideNav.classList.add("open");
   els.sidebarOverlay.classList.add("open");
-  els.sideNav.setAttribute("aria-hidden", "false");
   syncDrawerMode();
   setDebugNav("Sidebar opened. Tap Home, New Record, or Reports.");
 }
