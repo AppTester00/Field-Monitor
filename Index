@@ -1719,17 +1719,20 @@ function getInitials(name) {
 
 function showMainView(viewName) {
   pushDebugNav('showMainView("' + viewName + '")');
-  
 
-   const showActivity = viewName === "activity";
+  const showActivity = viewName === "activity";
   const showSummary = viewName === "summary";
+
+  // ✅ FIXED PART
+  els.recordView.hidden = showActivity || showSummary;
+  els.activityView.hidden = !showActivity;
+  els.summaryView.hidden = !showSummary;
 
   // Active button highlight
   els.recordTabButton.classList.toggle("active", !showActivity && !showSummary);
   els.activityTabButton.classList.toggle("active", showActivity);
   els.summaryTabButton.classList.toggle("active", showSummary);
 
-  // Animate
   if (showActivity) {
     animateViewPanel(els.activityView);
     renderActivity(true).catch(() => {});
