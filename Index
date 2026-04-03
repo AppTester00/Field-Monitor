@@ -3202,7 +3202,22 @@ els.drawerLogoutButton.addEventListener("click", () => {
   logout();
 });
 
+// ✅ DIRECT NAV HANDLERS (FINAL FIX)
 
+els.summaryTabButton.addEventListener("click", () => {
+  console.log("Home clicked");
+  showMainView("summary");
+});
+
+els.recordTabButton.addEventListener("click", () => {
+  console.log("Record clicked");
+  showMainView("record");
+});
+
+els.activityTabButton.addEventListener("click", () => {
+  console.log("Reports clicked");
+  showMainView("activity");
+});
  
 els.passwordInput.addEventListener("keydown", (event) => {
   if (event.key === "Enter") {
@@ -3333,16 +3348,7 @@ if (!isAndroidAppContainer() && "serviceWorker" in navigator) {
 }
 window.addEventListener("load", autoSyncPendingUploads);
 
-document.querySelectorAll("#sideNav button").forEach(btn => {
-  btn.addEventListener("click", function () {
-    const view = this.getAttribute("data-view");
-    console.log("CLICKED:", view);
 
-    if (view) {
-      showMainView(view);
-    }
-  });
-});
 </script>
 
 </body>
