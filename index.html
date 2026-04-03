@@ -1321,9 +1321,7 @@ button:disabled {
       <div id="networkBadge" class="status-pill neutral">Checking Network...</div>
       <div id="gpsBadge" class="status-pill neutral">GPS Not Captured</div>
     </div>
-	<div id="reportsView">
-  <h2>Reports Page</h2>
-</div>
+
     <div class="camera-controls">
       <button id="getLocationButton" type="button">Get GPS</button>
       <button id="retryLocationButton" class="secondary-button" type="button">Retry GPS</button>
@@ -1463,10 +1461,7 @@ button:disabled {
       </div>
 
     </div>
-	<div id="reportsView">
-  <h2>Reports</h2>
-  <p>This is your reports page.</p>
-</div>
+
     <p id="summaryEmpty" class="inline-helper">No saved records available for summary yet.</p>
     <div id="summaryTableWrap"></div>
   </div>
@@ -1487,8 +1482,7 @@ let currentAddress = "";
 let currentFacingMode = "environment";
 let isSaving = false;
 let deferredInstallPrompt = null;
-let lastSidebarTouchPoint = null;
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby4Qjq3ziZk1UzIW9NCa1eKTIe3TWtofyH1ORKFRRCLGLAT8uUWSxgNrEIAk8mngxvvwA/exec";
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx-GjLgl-Ljf-vcirwGBX9zZ_2gm8ypOVEeaa3Z6NiH6drcrNKc0dBRYcoyOcOLZBEpnA/exec";
 const ATTENDANCE_HISTORY_KEY = "fieldAttendanceHistory";
 const PENDING_UPLOADS_KEY = "fieldAttendancePendingUploads";
 const SESSION_KEY = "fieldMonitorSession";
@@ -1538,12 +1532,10 @@ const els = {
   recordTabButton: document.getElementById("recordTabButton"),
   activityTabButton: document.getElementById("activityTabButton"),
   summaryTabButton: document.getElementById("summaryTabButton"),
-  reportsTabButton: document.getElementById(reportsTabButton"),
   sideNavList: document.getElementById("sideNavList"),
   recordView: document.getElementById("recordView"),
   activityView: document.getElementById("activityView"),
   summaryView: document.getElementById("summaryView"),
-  reportsView: document.getElementById("reportsView"),
   farmerName: document.getElementById("farmerName"),
   farmerType: document.getElementById("farmerType"),
   extensionWorkerName: document.getElementById("extensionWorkerName"),
@@ -1715,33 +1707,22 @@ function getInitials(name) {
 }
 
 function showMainView(viewName) {
-  pushDebugNav("showMainView(\"" + viewName + "\")");
-  
+  pushDebugNav('showMainView("' + viewName + '")');
+
   const showActivity = viewName === "activity";
   const showSummary = viewName === "summary";
-  const showReports = viewName === "reports";
-  
-  els.recordView.hidden = showActivity || showSummary; || showReports;
-  els.activityView.hidden = !showActivity;
-  els.summaryView.hidden = !showSummary;
-  els.reportsView.hidden = !showReports;
-  
-  
-  els.recordView.style.display = showActivity || showSummary || showReports ? "none" : "block";
+
+  // Show / hide views
+  els.recordView.style.display = (!showActivity && !showSummary) ? "block" : "none";
   els.activityView.style.display = showActivity ? "block" : "none";
   els.summaryView.style.display = showSummary ? "block" : "none";
-  els.reportsView.style.display = showReports ? "block" : "none";
-  
-  els.recordTabButton.classList.toggle("active", !showActivity && !showSummary && !showReports);
+
+  // Active button highlight
+  els.recordTabButton.classList.toggle("active", !showActivity && !showSummary);
   els.activityTabButton.classList.toggle("active", showActivity);
   els.summaryTabButton.classList.toggle("active", showSummary);
-  els.reportsTabButton.classList.toggle("active", showReports);
-  
-  
-  els.recordTabButton.setAttribute("aria-current", !showActivity && !showSummary ? "page" : "false");
-  els.activityTabButton.setAttribute("aria-current", showActivity ? "page" : "false");
-  els.summaryTabButton.setAttribute("aria-current", showSummary ? "page" : "false");
 
+  // Animate
   if (showActivity) {
     animateViewPanel(els.activityView);
     renderActivity(true).catch(() => {});
@@ -1757,48 +1738,8 @@ function showMainView(viewName) {
 
 window.showMainView = showMainView;
 
-function getSidebarViewButtonFromPoint(clientX, clientY) {
-  const buttons = [
-    els.summaryTabButton,
-    els.recordTabButton,
-    els.activityTabButton
-  ];
 
-  for (let index = 0; index < buttons.length; index += 1) {
-    const button = buttons[index];
-    const rect = button.getBoundingClientRect();
-    if (
-      clientX >= rect.left &&
-      clientX <= rect.right &&
-      clientY >= rect.top &&
-      clientY <= rect.bottom
-    ) {
-      return button;
-    }
-  }
 
-  let nearestButton = null;
-  let nearestDistance = Number.POSITIVE_INFINITY;
-  buttons.forEach((button) => {
-    const rect = button.getBoundingClientRect();
-    const centerY = rect.top + rect.height / 2;
-    const distance = Math.abs(clientY - centerY);
-    if (distance < nearestDistance) {
-      nearestDistance = distance;
-      nearestButton = button;
-    }
-  });
-
-  return nearestButton;
-}
-
-function rememberSidebarTouchPoint(clientX, clientY) {
-  lastSidebarTouchPoint = {
-    x: clientX,
-    y: clientY,
-    timestamp: Date.now()
-  };
-}
 
 function readSession() {
   try {
@@ -2643,106 +2584,93 @@ function getActivityEntriesForCurrentUser() {
 }
 
 function normalizeSharedReportEntry(rawEntry) {
-  if (!rawEntry) {
-    return null;
-  }
+  if (!rawEntry) return null;
 
   const savedAt = String(
     rawEntry.timestamp ||
+    rawEntry["Timestamp"] ||
     rawEntry.savedAt ||
     rawEntry.dateTime ||
-    rawEntry.datetime ||
     ""
   ).trim();
-  const farmerName = String(rawEntry.farmerName || rawEntry.nameOfFarmer || rawEntry.name || "").trim();
-  const farmerType = String(rawEntry.farmerType || rawEntry.type || "").trim();
-  const extensionWorkerName = String(rawEntry.extensionWorkerName || rawEntry.extensionWorker || rawEntry.worker || "").trim();
-  const username = String(rawEntry.username || rawEntry.user || "").trim();
-  const latitude = String(rawEntry.latitude || rawEntry.lat || "").trim();
-  const longitude = String(rawEntry.longitude || rawEntry.lng || "").trim();
-  const photoDataUrl = String(
-    rawEntry.photoDataUrl ||
-    rawEntry.originalPhotoLink ||
-    rawEntry.photoLink ||
-    rawEntry.photo ||
-    ""
-  ).trim();
-  const status = String(rawEntry.status || "").trim();
-  const dateKey = savedAt && savedAt.length >= 10 ? savedAt.slice(0, 10) : "";
 
-  if (!farmerName) {
-    return null;
-  }
+  const farmerName = String(
+    rawEntry.farmerName ||
+    rawEntry["Name of Farmer"] ||
+    rawEntry.name ||
+    ""
+  ).trim();
+
+  const extensionWorkerName = String(
+    rawEntry.extensionWorkerName ||
+    rawEntry["Extension Worker"] ||
+    ""
+  ).trim();
 
   return {
-    username: username,
-    extensionWorkerName: extensionWorkerName,
-    farmerName: farmerName,
-    farmerType: farmerType,
-    status: status,
-    photoDataUrl: photoDataUrl,
-    latitude: latitude,
-    longitude: longitude,
-    dateKey: dateKey,
-    savedAt: savedAt
+    savedAt,
+    farmerName,
+    extensionWorkerName,
+    dateKey: savedAt ? savedAt.slice(0, 10) : ""
   };
 }
 
+ 
+
 async function fetchSharedReportEntries(forceRefresh) {
+
   const session = readSession();
   const signedIn = Boolean(session && session.username && session.extensionWorkerName && !session.mustChangePassword);
 
   if (!signedIn) {
     sharedReportEntriesCache = [];
-    sharedReportEntriesLoadedFor = "";
-    return [];
+    return sharedReportEntriesCache;
   }
 
-  const cacheKey = String(session.username || "").trim().toLowerCase();
-  if (!forceRefresh && sharedReportEntriesLoadedFor === cacheKey && sharedReportEntriesCache.length >= 0) {
-    return sharedReportEntriesCache.slice();
-  }
-
-  const response = await fetch(APPS_SCRIPT_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "text/plain;charset=utf-8"
-    },
-    body: JSON.stringify({
-      action: "getReports",
-      username: session.username,
-      extensionWorkerName: session.extensionWorkerName
-    })
-  });
-
-  const responseText = await response.text();
-  let responseJson = null;
+  const cacheKey = session.extensionWorkerName || "all";
 
   try {
-    responseJson = responseText ? JSON.parse(responseText) : null;
+    const response = await fetch(APPS_SCRIPT_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "text/plain;charset=utf-8"
+      },
+      body: JSON.stringify({
+        action: "getReports",
+        username: session.username,
+        extensionWorkerName: session.extensionWorkerName
+      })
+    });
+
+    const responseText = await response.text();
+    let responseJson = null;
+
+    try {
+      responseJson = responseText ? JSON.parse(responseText) : null;
+    } catch (error) {
+      responseJson = null;
+    }
+
+    if (!response.ok || (responseJson && responseJson.success === false)) {
+      throw new Error("Unable to load report data.");
+    }
+
+    const rawEntries = Array.isArray(responseJson)
+      ? responseJson
+      : (responseJson && (responseJson.records || responseJson.rows || responseJson.data)) || [];
+
+sharedReportEntriesCache = rawEntries
+  .map(normalizeSharedReportEntry)
+  .filter(Boolean);
+
+    sharedReportEntriesLoadedFor = cacheKey;
+    return sharedReportEntriesCache;
+
   } catch (error) {
-    responseJson = null;
+    console.error("FETCH ERROR:", error);
+    return [];
   }
-
-  if (!response.ok || (responseJson && responseJson.success === false)) {
-    throw new Error((responseJson && responseJson.message) || "Unable to load Google Sheet report data.");
-  }
-
-  const rawEntries = Array.isArray(responseJson)
-    ? responseJson
-    : (responseJson && (responseJson.records || responseJson.rows || responseJson.data)) || [];
-
-  sharedReportEntriesCache = rawEntries
-    .map(normalizeSharedReportEntry)
-    .filter(Boolean)
-    .filter((entry) =>
-      String(entry.extensionWorkerName || "").trim().toLowerCase() === String(session.extensionWorkerName || "").trim().toLowerCase()
-    )
-    .sort((a, b) => new Date(a.savedAt || 0).getTime() - new Date(b.savedAt || 0).getTime());
-  sharedReportEntriesLoadedFor = cacheKey;
-  return sharedReportEntriesCache.slice();
 }
-
 async function getReportEntriesForCurrentUser(forceRefresh) {
   try {
     return await fetchSharedReportEntries(forceRefresh);
@@ -2767,9 +2695,11 @@ function getWeekKey(date) {
 }
 
 async function renderSummary(forceRefresh) {
+
   const session = readSession();
   const signedIn = Boolean(session && session.username && session.extensionWorkerName && !session.mustChangePassword);
   const entries = signedIn ? await getReportEntriesForCurrentUser(forceRefresh) : [];
+  console.log("SUMMARY ENTRIES:", entries);
   const todayKey = getTodayKey();
   const weekKey = getWeekKey(new Date());
   const dailyUnique = new Set();
@@ -3244,42 +3174,9 @@ els.drawerLogoutButton.addEventListener("click", () => {
   closeSettingsDrawer();
   logout();
 });
-els.sideNavList.adaadEventListener("click", (event) => {
-  const button = event.target.closest("button[data-view]");
-  if (!button) return;
 
-  const viewName = button.dataset.view;
-  showMainView(viewName);
-});
-  const touch = event.touches && event.touches[0];
-  if (!touch) {
-    return;
-  }
-  rememberSidebarTouchPoint(touch.clientX, touch.clientY);
-}, { passive: true });
 
-els.sideNavList.addEventListener("click", (event) => {
-  const recentTouchPoint = lastSidebarTouchPoint && (Date.now() - lastSidebarTouchPoint.timestamp) < 1200
-    ? lastSidebarTouchPoint
-    : null;
-  const clientX = recentTouchPoint ? recentTouchPoint.x : event.clientX;
-  const clientY = recentTouchPoint ? recentTouchPoint.y : event.clientY;
-  const matchedButton = getSidebarViewButtonFromPoint(clientX, clientY)
-    || event.target.closest("button[data-view]");
-
-  if (!matchedButton) {
-    setDebugNav("Sidebar tap did not match a nav button.");
-    return;
-  }
-
-  const viewName = matchedButton.dataset.view || "record";
-  const label = matchedButton === els.summaryTabButton
-    ? "Home"
-    : (matchedButton === els.activityTabButton ? "Reports" : "New Record");
-
-  setDebugNav(label + " click @ " + Math.round(clientX) + "," + Math.round(clientY));
-  showMainView(viewName);
-});
+ 
 els.passwordInput.addEventListener("keydown", (event) => {
   if (event.key === "Enter") {
     event.preventDefault();
@@ -3400,14 +3297,13 @@ els.installAppButton.addEventListener("click", async () => {
 
 if (!isAndroidAppContainer() && "serviceWorker" in navigator) {
   window.addEventListener("load", function () {
-   if (location.protocol === "http:" || location.protocol === "https:") {
-  navigator.serviceWorker.register("./sw.js");
-} {
-      console.error("Service worker registration failed:", error);
-    });
+    if (location.protocol === "http:" || location.protocol === "https:") {
+      navigator.serviceWorker.register("./sw.js")
+        .then(() => console.log("Service Worker Registered"))
+        .catch(error => console.error("SW failed:", error));
+    }
   });
 }
-
 window.addEventListener("load", autoSyncPendingUploads);
 </script>
 
