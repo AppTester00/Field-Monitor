@@ -2589,15 +2589,18 @@ function normalizeSharedReportEntry(rawEntry) {
   const savedAt = String(
     rawEntry.timestamp ||
     rawEntry["Timestamp"] ||
-    rawEntry.savedAt ||
-    rawEntry.dateTime ||
     ""
   ).trim();
 
   const farmerName = String(
     rawEntry.farmerName ||
     rawEntry["Name of Farmer"] ||
-    rawEntry.name ||
+    ""
+  ).trim();
+
+  const farmerType = String(
+    rawEntry.farmerType ||
+    rawEntry["Farmer Type"] ||
     ""
   ).trim();
 
@@ -2607,15 +2610,35 @@ function normalizeSharedReportEntry(rawEntry) {
     ""
   ).trim();
 
+  const latitude = String(
+    rawEntry.latitude ||
+    rawEntry["Latitude"] ||
+    ""
+  ).trim();
+
+  const longitude = String(
+    rawEntry.longitude ||
+    rawEntry["Longitude"] ||
+    ""
+  ).trim();
+
+  const photoDataUrl = String(
+    rawEntry.photoDataUrl ||
+    rawEntry["Photo Link"] ||
+    ""
+  ).trim();
+
   return {
     savedAt,
     farmerName,
+    farmerType,
     extensionWorkerName,
+    latitude,
+    longitude,
+    photoDataUrl,
     dateKey: savedAt ? savedAt.slice(0, 10) : ""
   };
 }
-
- 
 
 async function fetchSharedReportEntries(forceRefresh) {
 
