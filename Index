@@ -1822,6 +1822,11 @@ function applySession(session) {
   renderActivity().catch(() => {});
   renderSummary().catch(() => {});
   updateSaveButtonState();
+
+// ✅ RESTORE CURRENT VIEW AFTER SESSION UPDATE
+if (currentView) {
+  showMainView(currentView);
+}
 }
 
 async function login() {
