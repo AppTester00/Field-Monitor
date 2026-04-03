@@ -2640,58 +2640,53 @@ function normalizeSharedReportEntry(rawEntry) {
 }
 
 async function fetchSharedReportEntries(forceRefresh) {
-
   const session = readSession();
   const signedIn = Boolean(session && session.username && session.extensionWorkerName && !session.mustChangePassword);
 
   if (!signedIn) {
     sharedReportEntriesCache = [];
-    return sharedReportEntriesCache;
-  }
-
-  const cacheKey = session.extensionWorkerName || "all";
-
-  try {
-    const response = await fetch(APPS_SCRIPT_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "text/plain;charset=utf-8"
-      },
-      body: JSON.stringify({
-        action: "getReports",
-        username: session.username,
-        extensionWorkerName: session.extensionWorkerName
-      })
-    });
-
-    const responseText = await response.text();
-    let responseJson = null;
-
-    try {
-      responseJson = responseText ? JSON.parse(responseText) : null;
-    } catch (error) {
-      responseJson = null;
-    }
-
-    if (!response.ok || (responseJson && responseJson.success === false)) {
-      throw new Error("Unable to load report data.");
-    }
-
-    const rawEntries = Array.isArray(responseJson)
-      ? responseJson
-      : (responseJson && (responseJson.records || responseJson.rows || responseJson.data)) || [];
-
-sharedReportEntriesCache = rawEntries
-  .map(normalizeSharedReportEntry)
-  .filter(Boolean);
-
-    sharedReportEntriesLoadedFor = cacheKey;
-    return sharedReportEntriesCache;
-
-  } catch (error) {
-    console.error("FETCH ERROR:", error);
+    sharedReportEntriesLoadedFor = "";
     return [];
   }
+
+  const cacheKey = String(session.username || "").trim().toLowerCase();
+
+  const response = await fetch(APPS_SCRIPT_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "text/plain;charset=utf-8"
+    },
+    body: JSON.stringify({
+      action: "getReports",
+      username: session.username,
+      extensionWorkerName: session.extensionWorkerName
+    })
+  });
+
+  const responseText = await response.text();
+  let responseJson = null;
+
+  try {
+    responseJson = responseText ? JSON.parse(responseText) : null;
+  } catch (error) {
+    console.error("JSON PARSE ERROR:", error);
+    responseJson = null;
+  }
+
+  const rawEntries = Array.isArray(responseJson)
+    ? responseJson
+    : (responseJson && (responseJson.records || responseJson.rows || responseJson.data)) || [];
+
+  console.log("RAW ENTRIES:", rawEntries);
+
+  sharedReportEntriesCache = rawEntries
+    .map(normalizeSharedReportEntry)
+    .filter(Boolean);
+
+  sharedReportEntriesLoadedFor = cacheKey;
+
+  return sharedReportEntriesCache;
+}
 }
 async function getReportEntriesForCurrentUser(forceRefresh) {
   try {
