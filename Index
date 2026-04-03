@@ -1475,6 +1475,7 @@ let latitude = null;
 let longitude = null;
 let locationAccuracy = null;
 let imageBase64 = "";
+let currentView = "record";
 let originalImageBase64 = "";
 let previewImageBase64 = "";
 let cameraStream = null;
@@ -1705,6 +1706,8 @@ function getInitials(name) {
 }
 
 function showMainView(viewName) {
+currentView = viewName;
+console.log("Switching to:", viewName);
   pushDebugNav('showMainView("' + viewName + '")');
 console.log("VIEW:", viewName);
   const showActivity = viewName === "activity";
@@ -1730,7 +1733,7 @@ console.log("VIEW:", viewName);
     animateViewPanel(els.recordView);
   }
 
-//  closeSidebar();
+ closeSidebar();
 }
 
 window.showMainView = showMainView;
@@ -2732,6 +2735,11 @@ async function renderSummary(forceRefresh) {
     if (getWeekKey(savedDate) === weekKey) {
       weeklyUnique.add(farmerKey);
     }
+if (currentView === "summary") {
+  els.recordView.hidden = true;
+  els.activityView.hidden = true;
+  els.summaryView.hidden = false;
+}
   });
 
   els.dailySummaryValue.innerText = String(dailyUnique.size);
@@ -2787,7 +2795,11 @@ async function renderActivity(forceRefresh) {
   if (!signedIn || entries.length === 0) {
     return;
   }
-
+if (currentView === "activity") {
+  els.recordView.hidden = true;
+  els.activityView.hidden = false;
+  els.summaryView.hidden = true;
+}
   const rows = entries.map((entry, index) => {
     const when = entry.savedAt ? new Date(entry.savedAt).toLocaleString() : "Unknown time";
     const farmerType = entry.farmerType || "Unknown type";
