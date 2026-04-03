@@ -3244,7 +3244,13 @@ els.drawerLogoutButton.addEventListener("click", () => {
   closeSettingsDrawer();
   logout();
 });
-els.sideNavList.addEventListener("touchstart", (event) => {
+els.sideNavList.adaadEventListener("click", (event) => {
+  const button = event.target.closest("button[data-view]");
+  if (!button) return;
+
+  const viewName = button.dataset.view;
+  showMainView(viewName);
+});
   const touch = event.touches && event.touches[0];
   if (!touch) {
     return;
