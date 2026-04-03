@@ -1315,6 +1315,7 @@ button:disabled {
 
   <div id="appContent" hidden>
   <div id="recordView" class="view-panel">
+    <div id="reportsView"></div>
   <div class="section-card">
     <p class="section-title">Location</p>
     <div id="statusBar" class="status-bar">
@@ -1571,9 +1572,20 @@ const els = {
   debugNavStatus: document.getElementById("debugNavStatus")
 };
 // ✅ FIX NAV BUTTONS (CORRECT PLACE)
-els.summaryTabButton.onclick = () => showMainView("summary");
-els.recordTabButton.onclick = () => showMainView("record");
-els.activityTabButton.onclick = () => showMainView("activity");
+els.summaryTabButton.onclick = function (e) {
+  e.stopPropagation();
+  showMainView("summary");
+};
+
+els.recordTabButton.onclick = function (e) {
+  e.stopPropagation();
+  showMainView("record");
+};
+
+els.activityTabButton.onclick = function (e) {
+  e.stopPropagation();
+  showMainView("activity");
+};
 function promoteOverlayElements() {
   [els.sidebarOverlay, els.sideNav, els.settingsOverlay, els.settingsDrawer].forEach((element) => {
     if (element && element.parentElement !== document.body) {
@@ -1707,14 +1719,10 @@ function getInitials(name) {
 
 function showMainView(viewName) {
   pushDebugNav('showMainView("' + viewName + '")');
+  
 
-  const showActivity = viewName === "activity";
+   const showActivity = viewName === "activity";
   const showSummary = viewName === "summary";
-
-  // Show / hide views
-  els.recordView.style.display = (!showActivity && !showSummary) ? "block" : "none";
-  els.activityView.style.display = showActivity ? "block" : "none";
-  els.summaryView.style.display = showSummary ? "block" : "none";
 
   // Active button highlight
   els.recordTabButton.classList.toggle("active", !showActivity && !showSummary);
