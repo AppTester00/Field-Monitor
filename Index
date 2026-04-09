@@ -1471,6 +1471,7 @@ button:disabled {
 </div>
 
 <script>
+console.log("APP LOADED");
 let latitude = null;
 let longitude = null;
 let locationAccuracy = null;
