@@ -3305,9 +3305,15 @@ if (!readSession()) {
   setStatus("Sign in to continue.", "");
 }
 // ✅ RESTORE LAST VIEW
+// ✅ SAFE LOAD (FIX BLANK SCREEN)
+try {
+  const lastView = localStorage.getItem("lastView") || "record";
+  showMainView(lastView);
+} catch (e) {
+  console.error("LOAD ERROR:", e);
+  showMainView("record");
+}
 
-const lastView = localStorage.getItem("lastView") || "summary";
-showMainView(lastView);
 updateSaveButtonState();
 //renderActivity().catch(() => {});
 //renderSummary().catch(() => {});
