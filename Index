@@ -1670,7 +1670,7 @@ function closeSidebar() {
   syncDrawerMode();
   pushDebugNav("Sidebar closed");
 }
-}
+
 
 function openSidebar() {
   els.sideNav.style.display = "flex";
