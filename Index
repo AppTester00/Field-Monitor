@@ -1715,19 +1715,20 @@ function getInitials(name) {
 }
 
 function showMainView(viewName) {
-currentView = viewName;
-console.log("Switching to:", viewName);
-  pushDebugNav('showMainView("' + viewName + '")');
-console.log("VIEW:", viewName);
+
+  // ✅ SAVE VIEW (FIX)
+  localStorage.setItem("lastView", viewName);
+
+  currentView = viewName;
+  console.log("Switching to:", viewName);
+
   const showActivity = viewName === "activity";
   const showSummary = viewName === "summary";
 
-  // ✅ FIXED PART
   els.recordView.hidden = showActivity || showSummary;
   els.activityView.hidden = !showActivity;
   els.summaryView.hidden = !showSummary;
 
-  // Active button highlight
   els.recordTabButton.classList.toggle("active", !showActivity && !showSummary);
   els.activityTabButton.classList.toggle("active", showActivity);
   els.summaryTabButton.classList.toggle("active", showSummary);
@@ -1742,7 +1743,7 @@ console.log("VIEW:", viewName);
     animateViewPanel(els.recordView);
   }
 
- closeSidebar();
+  closeSidebar();
 }
 
 window.showMainView = showMainView;
@@ -3302,7 +3303,9 @@ applySession(readSession());
 if (!readSession()) {
   setStatus("Sign in to continue.", "");
 }
-showMainView("summary");
+// ✅ RESTORE LAST VIEW
+const lastView = localStorage.getItem("lastView") || "summary";
+showMainView(lastView);
 updateSaveButtonState();
 //renderActivity().catch(() => {});
 //renderSummary().catch(() => {});
